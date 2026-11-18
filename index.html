@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Executivo - Gestão Comercial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <!-- Cabeçalho Superior -->
+    <header class="bg-slate-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Painel Executivo Comercial</h1>
+                <p class="text-xs text-slate-400">Integração REST TOTVS Protheus em Tempo Real</p>
+            </div>
+
+            <!-- Filtros Principais -->
+            <div class="flex flex-wrap items-end gap-3">
+                <div>
+                    <label for="filtroFilial" class="block text-[10px] uppercase text-slate-400 font-semibold mb-1">Filial</label>
+                    <!-- Filtro de Filial no HTML (Todas as Filiais como padrão) -->
+                    <select id="filtroFilial" onchange="carregarDadosAPI()" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                        <option value="" selected>Todas as Filiais</option>
+                        <option value="01">01 - Matriz</option>
+                        <option value="02">02 - Filial</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="filtroDataIni" class="block text-[10px] uppercase text-slate-400 font-semibold mb-1">Data De</label>
+                    <input type="date" id="filtroDataIni" onchange="aoMudarPeriodoPrincipal()" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label for="filtroDataFim" class="block text-[10px] uppercase text-slate-400 font-semibold mb-1">Data Até</label>
+                    <input type="date" id="filtroDataFim" onchange="aoMudarPeriodoPrincipal()" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="carregarDadosAPI()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition shadow">
+                        Atualizar Dados
+                    </button>
+                    <button id="btnAutoRefresh" onclick="alternarAutoRefresh()" title="Clique para pausar/ativar atualização automática a cada 3 minutos" class="bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-600/30 text-xs font-mono px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="textoTimerRefresh">Auto: 03:00</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navegação Principal (Abas) -->
+        <div class="bg-slate-800/80 border-t border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 flex gap-2 pt-2">
+                <button onclick="mudarSecaoPrincipal('dashboard')" id="nav-dashboard" class="px-5 py-2.5 text-sm font-semibold rounded-t-lg bg-slate-50 text-indigo-700 border-t-2 border-indigo-500 transition">
+                    Dashboard Executivo
+                </button>
+                <button onclick="mudarSecaoPrincipal('graficos')" id="nav-graficos" class="px-5 py-2.5 text-sm font-medium rounded-t-lg text-slate-300 hover:text-white hover:bg-slate-700/60 transition">
+                    Gráficos Analíticos
+                </button>
+                <button onclick="mudarSecaoPrincipal('relatorios')" id="nav-relatorios" class="px-5 py-2.5 text-sm font-medium rounded-t-lg text-slate-300 hover:text-white hover:bg-slate-700/60 transition">
+                    Relatórios Detalhados
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+
+        <!-- ============================================================== -->
+        <!-- ABA 1: DASHBOARD EXECUTIVO                                    -->
+        <!-- ============================================================== -->
+        <div id="secao-dashboard" class="space-y-3">
+
+            <!-- Barra de Ação do Dashboard -->
+            <div class="flex justify-between items-center bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-xs font-bold uppercase tracking-wide text-slate-600">Resumo Executivo Consolidado</span>
+                <button onclick="abrirModalEmail('dashboard')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1.5">
+                    ✉️ Enviar Dashboard por E-mail
+                </button>
+            </div>
+
+            <!-- 1. Indicadores Principais (Compactos) -->
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-0.5">
+                        <span class="text-[10px] font-bold uppercase text-slate-400">Faturamento</span>
+                        <span class="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.2 rounded font-semibold">Período Atual</span>
+                    </div>
+                    <div class="flex justify-between items-baseline">
+                        <div class="text-base font-bold text-blue-600" id="kpiFat">R$ 0,00</div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="kpiCupons">0 cupons</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-0.5">
+                        <p class="text-[10px] text-slate-500">Total Consolidado</p>
+                        <span id="badgeVarFat" class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-500">0,0% vs ant.</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-0.5">
+                        <span class="text-[10px] font-bold uppercase text-slate-400">Margem Bruta (%)</span>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded font-semibold">Rentabilidade</span>
+                    </div>
+                    <div class="text-base font-bold text-emerald-600" id="kpiMargem">0,0%</div>
+                    <div class="flex items-center justify-between mt-0.5">
+                        <p class="text-[10px] text-slate-500">Margem Média Geral</p>
+                        <span id="badgeVarMargem" class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-500">0,0 p.p.</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex justify-between items-center mb-0.5">
+                        <span class="text-[10px] font-bold uppercase text-slate-400">Ticket Médio</span>
+                        <span class="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded font-semibold">Por Venda/Cupom</span>
+                    </div>
+                    <div class="text-base font-bold text-blue-600" id="kpiTicket">R$ 0,00</div>
+                    <div class="flex items-center justify-between mt-0.5">
+                        <p class="text-[10px] text-slate-500">Média por Transação</p>
+                        <span id="badgeVarTicket" class="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-500">0,0% vs ant.</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Quadro Comparativo Mês Anterior -->
+            <section class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-1.5 pb-1.5 border-b border-slate-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-[11px] font-bold uppercase tracking-wide text-slate-700">Comparativo — Mês Anterior (Mesmo Período)</h2>
+                            <span class="text-[9px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.2 rounded font-medium">Mesma Filial Geral</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 leading-tight">Sincronizado automaticamente com o período homólogo do mês anterior.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                        <span class="text-[10px] font-semibold uppercase text-slate-500 ml-1">Período:</span>
+                        <input type="date" id="compDataIni" onchange="carregarComparativoMes()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
+                        <span class="text-slate-400 text-[10px]">até</span>
+                        <input type="date" id="compDataFim" onchange="carregarComparativoMes()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
+                        <button onclick="carregarComparativoMes()" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded transition">
+                            Recalcular
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+                    <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-100 flex justify-between items-baseline">
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">Fat. Mês Anterior</span>
+                            <div class="text-base font-bold text-blue-600" id="compFat">R$ 0,00</div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="compCupons">0 cupons</span>
+                    </div>
+
+                    <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-100 flex justify-between items-baseline">
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">Margem Mês Anterior</span>
+                            <div class="text-base font-bold text-slate-700" id="compMargem">0,0%</div>
+                        </div>
+                        <span class="text-[10px] text-slate-400">Rentabilidade</span>
+                    </div>
+
+                    <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-100 flex justify-between items-baseline">
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">Ticket Mês Anterior</span>
+                            <div class="text-base font-bold text-blue-600" id="compTicket">R$ 0,00</div>
+                        </div>
+                        <span class="text-[10px] text-slate-400">Por Cupom</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Quadro Comparativo Ano Anterior -->
+            <section class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-1.5 pb-1.5 border-b border-slate-100">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-[11px] font-bold uppercase tracking-wide text-slate-700">Comparativo — Mesmo Período (Ano Anterior / YoY)</h2>
+                            <span class="text-[9px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.2 rounded font-medium">Mesma Filial Geral</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 leading-tight">Sincronizado automaticamente com o mesmo período do ano passado.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-lg border border-slate-200">
+                        <span class="text-[10px] font-semibold uppercase text-slate-500 ml-1">Período:</span>
+                        <input type="date" id="compAnoDataIni" onchange="carregarComparativoAno()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
+                        <span class="text-slate-400 text-[10px]">até</span>
+                        <input type="date" id="compAnoDataFim" onchange="carregarComparativoAno()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
+                        <button onclick="carregarComparativoAno()" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded transition">
+                            Recalcular
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+                    <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-100 flex justify-between items-baseline">
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">Fat. Ano Anterior</span>
+                            <div class="text-base font-bold text-blue-600" id="compAnoFat">R$ 0,00</div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium" id="compAnoCupons">0 cupons</span>
+                    </div>
+
+                    <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-100 flex justify-between items-baseline">
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">Margem Ano Anterior</span>
+                            <div class="text-base font-bold text-slate-700" id="compAnoMargem">0,0%</div>
+                        </div>
+                        <span class="text-[10px] text-slate-400">Rentabilidade</span>
+                    </div>
+
+                    <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-100 flex justify-between items-baseline">
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase text-slate-400 mb-0.5">Ticket Ano Anterior</span>
+                            <div class="text-base font-bold text-blue-600" id="compAnoTicket">R$ 0,00</div>
+                        </div>
+                        <span class="text-[10px] text-slate-400">Por Cupom</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Card Desempenho por Loja -->
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🏪</span>
+                            <h2 class="text-sm font-bold text-slate-900">Desempenho por Loja</h2>
+                        </div>
+                        <p class="text-[11px] text-slate-500 leading-tight">Indicadores de faturamento e ticket médio.</p>
+                    </div>
+                    <button onclick="exportarExcelLojas()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1.5">
+                        📊 Excel
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase border-b border-slate-200">
+                            <tr>
+                                <th class="py-2 px-4">Loja / Cliente</th>
+                                <th class="py-2 px-4">Vendas</th>
+                                <th class="py-2 px-4">Faturamento</th>
+                                <th class="py-2 px-4">Ticket Médio</th>
+                                <th class="py-2 px-4">Part. (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyDesempenhoLoja" class="divide-y divide-slate-100 text-xs text-slate-700 leading-tight">
+                            <tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Carregando desempenho das lojas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- ABA 2: GRÁFICOS ANALÍTICOS                                    -->
+        <!-- ============================================================== -->
+        <div id="secao-graficos" class="hidden space-y-4">
+            <!-- Top 10 Mercadológicos (Separados: Faturamento e Quantidade) -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Top 10 Mercadológicos — Faturamento (Valor)</h3>
+                            <p class="text-[11px] text-slate-400">Ranking por valor total em R$</p>
+                        </div>
+                        <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">Valor (R$)</span>
+                    </div>
+                    <div class="relative h-72 w-full">
+                        <canvas id="graficoTop10MercFat"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Top 10 Mercadológicos — Quantidade</h3>
+                            <p class="text-[11px] text-slate-400">Ranking por volume de unidades vendidas</p>
+                        </div>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-semibold">Quantidade</span>
+                    </div>
+                    <div class="relative h-72 w-full">
+                        <canvas id="graficoTop10MercQtd"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Top 10 Produtos (Valor vs Quantidade) -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Top 10 Produtos — por Faturamento (Valor)</h3>
+                            <p class="text-[11px] text-slate-400">Ranking por valor total em R$</p>
+                        </div>
+                        <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">Valor (R$)</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="graficoTop10Produtos"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Top 10 Produtos — por Quantidade</h3>
+                            <p class="text-[11px] text-slate-400">Ranking por volume de unidades vendidas</p>
+                        </div>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-semibold">Quantidade</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="graficoTop10Qtd"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gráficos Secundários (Departamento SZD + Últimos 30 Dias Consolidado) -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Vendas por Departamento</h3>
+                            <p class="text-[11px] text-slate-400">Participação por departamento (SZD)</p>
+                        </div>
+                        <span class="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-semibold">Departamento</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="graficoDepartamento"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Faturamento — Últimos 30 Dias (Consolidado)</h3>
+                            <p class="text-[11px] text-slate-400">Evolução diária de vendas</p>
+                        </div>
+                        <span class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-semibold">Consolidado</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="graficoFat30Dias"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Faturamento Últimos 30 Dias por Filial (Filial 01 e Filial 02) -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Faturamento — Últimos 30 Dias (Filial 01)</h3>
+                            <p class="text-[11px] text-slate-400">Evolução diária — Matriz / Loja 01</p>
+                        </div>
+                        <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">Filial 01</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="graficoFat30DiasF01"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <h3 class="text-xs font-bold uppercase tracking-wide text-slate-700">Faturamento — Últimos 30 Dias (Filial 02)</h3>
+                            <p class="text-[11px] text-slate-400">Evolução diária — Filial 02</p>
+                        </div>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-semibold">Filial 02</span>
+                    </div>
+                    <div class="relative h-64 w-full">
+                        <canvas id="graficoFat30DiasF02"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- ABA 3: RELATÓRIOS DETALHADOS                                  -->
+        <!-- ============================================================== -->
+        <div id="secao-relatorios" class="hidden">
+            <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <!-- Sub-abas de Relatórios -->
+                <div class="border-b border-slate-200 bg-slate-100/70 px-4 pt-3 flex flex-wrap gap-2" id="tabsContainer">
+                    <button onclick="mudarSubAba('fat_setor')" data-aba="fat_setor" class="tab-btn px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 border-indigo-600 text-indigo-700 bg-white">
+                        Faturamento por Setor
+                    </button>
+                    <button onclick="mudarSubAba('fat_mercadologico')" data-aba="fat_mercadologico" class="tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg">
+                        Por Mercadológico
+                    </button>
+                    <button onclick="mudarSubAba('fat_produto')" data-aba="fat_produto" class="tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg">
+                        Faturamento por Produto
+                    </button>
+                    <button onclick="mudarSubAba('top50_semanal')" data-aba="top50_semanal" class="tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg">
+                        Top 50 Semanal
+                    </button>
+                    <button onclick="mudarSubAba('sem_giro')" data-aba="sem_giro" class="tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg">
+                        Produtos Sem Giro (7d)
+                    </button>
+                    <button onclick="mudarSubAba('avarias')" data-aba="avarias" class="tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg">
+                        Avarias / Perdas
+                    </button>
+                    <button onclick="mudarSubAba('entradas_ofertas')" data-aba="entradas_ofertas" class="tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg">
+                        Entradas do Período
+                    </button>
+                    <button onclick="mudarSubAba('ruptura_loja')" data-aba="ruptura_loja" class="tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg">
+                        Ruptura de Loja
+                    </button>
+                </div>
+
+                <!-- Barra de Ações da Tabela -->
+                <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <h2 class="text-base font-bold text-slate-800" id="tituloRelatorio">Faturamento por Setor</h2>
+                    
+                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="buscaTabela" onkeyup="filtrarTabela()" placeholder="Filtrar na tabela..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm w-full sm:w-56 focus:outline-none focus:border-indigo-500">
+                        <button onclick="exportarExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+                            Exportar Excel
+                        </button>
+                        <button onclick="abrirModalEmail('relatorio')" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+                            Enviar E-mail
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabela Dinâmica -->
+                <div class="overflow-x-auto">
+                    <table id="tabelaRelatoriosDetalhados" class="w-full text-left border-collapse">
+                        <thead id="theadRelatorio" class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"></thead>
+                        <tbody id="tbodyRelatorio" class="divide-y divide-slate-100 text-sm text-slate-700">
+                            <tr><td colspan="9" class="p-8 text-center text-slate-400">Carregando dados...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal de Envio de E-mail -->
+    <div id="modalEmail" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">Enviar Relatório por E-mail</h3>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatário(s)</label>
+                <input type="text" id="emailDestinatario" placeholder="Digite os e-mails separados por ; (ex: email1@empresa.com; email2@empresa.com)" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                <p class="text-[11px] text-slate-500 mt-1">Se deixar em branco, o envio usará o grupo de e-mails configurado no parâmetro padrão do Protheus.</p>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="fecharModalEmail()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancelar</button>
+                <button onclick="dispararEmail()" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg">Enviar Agora</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================================
+        // CONFIGURAÇÕES DE CONEXÃO E AUTENTICAÇÃO PROTHEUS
+        // ==========================================================
+        const API_BASE = 'http://10.10.1.105:8332/rest/api/v1/painel';
+        const USUARIO_PROTHEUS = 'admin';       // <-- Insira seu usuário do Protheus
+        const SENHA_PROTHEUS   = 'Master@2026';       // <-- Insira sua senha do Protheus
+
+        // ==========================================================
+        // VARIÁVEIS GLOBAIS E TIMER DE AUTO-REFRESH (3 MINUTOS)
+        // ==========================================================
+        const INTERVALO_REFRESH_SEG = 180; // 3 minutos = 180 segundos
+        let segundosRestantes = INTERVALO_REFRESH_SEG;
+        let autoRefreshAtivo  = true;
+        let timerIntervalId   = null;
+
+        let abaAtual = 'fat_setor';
+        let modoEnvioEmail = 'relatorio';
+        let dadosGlobais = [];
+        let dadosLojasGlobais = [];
+        let resumoAtual = { fat: 0, margem: 0, ticket: 0 };
+        let resumoCompMes  = { fat: 0, margem: 0, ticket: 0 };
+        let resumoCompAno  = { fat: 0, margem: 0, ticket: 0 };
+
+        let chartTop10MercFatInst = null;
+        let chartTop10MercQtdInst = null;
+        let chartTop10Instance    = null;
+        let chartTop10QtdInst     = null;
+        let chartDeptoInstance    = null;
+        let chartFat30Instance    = null;
+        let chartFat30F01Instance = null;
+        let chartFat30F02Instance = null;
+
+        const CONFIG_ABAS = {
+            fat_setor: {
+                titulo: 'Faturamento por Setor',
+                colunas: ['Setor', 'Faturamento (R$)', 'Custo (R$)', 'Margem (%)'],
+                render: (item) => {
+                    const fat = Number(item.faturamento || 0);
+                    const custo = Number(item.custo || 0);
+                    const margem = fat > 0 ? (((fat - custo) / fat) * 100) : 0;
+                    const margemStr = margem.toFixed(1) + '%';
+                    const corMargem = margem < 0 ? 'text-red-600 font-bold' : 'text-emerald-600 font-semibold';
+                    return `
+                        <td class="p-3 font-medium">${item.setor || 'SEM SETOR'}</td>
+                        <td class="p-3 font-semibold text-blue-600">R$ ${fat.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td class="p-3 text-slate-500">R$ ${custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                        <td class="p-3 ${corMargem}">${margemStr}</td>
+                    `;
+                }
+            },
+            fat_mercadologico: {
+                titulo: 'Faturamento por Código Mercadológico',
+                colunas: ['Código', 'Grupo Mercadológico', 'Qtd Vendida', 'Faturamento (R$)'],
+                render: (item) => `
+                    <td class="p-3 font-mono text-xs">${item.codigo || '-'}</td>
+                    <td class="p-3 font-medium">${item.descricao || 'SEM MERCADOLÓGICO'}</td>
+                    <td class="p-3">${Number(item.qtd || 0).toLocaleString('pt-BR')}</td>
+                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item.faturamento || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                `
+            },
+            fat_produto: {
+                titulo: 'Faturamento por Produto',
+                colunas: ['Código', 'Descrição', 'Setor', 'Qtd Vendida', 'Total (R$)'],
+                render: (item) => `
+                    <td class="p-3 font-mono text-xs">${item.codigo}</td>
+                    <td class="p-3 font-medium">${item.desc}</td>
+                    <td class="p-3 text-slate-500">${item.setor || '-'}</td>
+                    <td class="p-3">${Number(item.qtd || 0).toLocaleString('pt-BR')}</td>
+                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item.total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                `
+            },
+            top50_semanal: {
+                titulo: 'Top 50 Produtos Mais Vendidos (Últimos 7 dias da Data Final)',
+                colunas: ['Código', 'Descrição', 'Setor', 'Qtd (7d)', 'Faturamento (R$)'],
+                render: (item) => `
+                    <td class="p-3 font-mono text-xs">${item.codigo}</td>
+                    <td class="p-3 font-medium">${item.desc}</td>
+                    <td class="p-3 text-slate-500">${item.setor || '-'}</td>
+                    <td class="p-3 font-bold text-indigo-600">${Number(item.qtd || 0).toLocaleString('pt-BR')}</td>
+                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item.total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                `
+            },
+            sem_giro: {
+                titulo: 'Produtos Com Saldo e Sem Giro (Últimos 7 dias)',
+                colunas: ['Código', 'Descrição', 'Setor', 'Saldo Atual'],
+                render: (item) => `
+                    <td class="p-3 font-mono text-xs">${item.codigo}</td>
+                    <td class="p-3 font-medium">${item.desc}</td>
+                    <td class="p-3 text-slate-500">${item.setor || '-'}</td>
+                    <td class="p-3 font-bold text-amber-600">${Number(item.saldo || 0).toLocaleString('pt-BR')}</td>
+                `
+            },
+            avarias: {
+                titulo: 'Avarias / Movimentações Internas por Setor',
+                colunas: ['Setor', 'Avaria no Período (R$)', 'Avaria Acumulada 30d (R$)'],
+                render: (item) => `
+                    <td class="p-3 font-medium">${item.setor || 'SEM SETOR'}</td>
+                    <td class="p-3 font-semibold text-red-600">R$ ${Number(item.avaria_dia || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 font-semibold text-slate-700">R$ ${Number(item.avaria_mes || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                `
+            },
+            entradas_ofertas: {
+                titulo: 'Notas de Entrada Digitadas no Período',
+                colunas: ['Setor', 'Código', 'Descrição', 'Tipo', 'Custo Unit. (R$)', 'Data'],
+                render: (item) => `
+                    <td class="p-3 text-slate-500">${item.setor || '-'}</td>
+                    <td class="p-3 font-mono text-xs">${item.codigo}</td>
+                    <td class="p-3 font-medium">${item.desc}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-semibold">${item.tipo}</span></td>
+                    <td class="p-3 font-semibold">R$ ${Number(item.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 text-xs text-slate-500">${item.data}</td>
+                `
+            },
+            ruptura_loja: {
+                titulo: 'Ruptura de Loja (Saldo em Depósito e Zerado em Loja)',
+                colunas: ['Setor', 'Código', 'EAN', 'Descrição', 'Loja Matriz', 'Loja Filial', 'Dep. Matriz', 'Dep. Filial', 'Estoque Total'],
+                render: (item) => {
+                    const lojaMat  = Number(item.lojaMat || 0);
+                    const lojaFil  = Number(item.lojaFil || 0);
+                    const depMat   = Number(item.depMat || 0);
+                    const depFil   = Number(item.depFil || 0);
+                    const estTotal = item.estoqueTotal !== undefined ? Number(item.estoqueTotal) : (lojaMat + lojaFil + depMat + depFil);
+                    return `
+                        <td class="p-3 text-slate-500">${item.setor || '-'}</td>
+                        <td class="p-3 font-mono text-xs">${item.codigo}</td>
+                        <td class="p-3 font-mono text-xs text-slate-500">${item.ean || '-'}</td>
+                        <td class="p-3 font-medium">${item.desc}</td>
+                        <td class="p-3 font-bold ${lojaMat === 0 ? 'text-red-600' : 'text-slate-700'}">${lojaMat}</td>
+                        <td class="p-3 font-bold ${lojaFil === 0 ? 'text-red-600' : 'text-slate-700'}">${lojaFil}</td>
+                        <td class="p-3 font-semibold text-emerald-700">${depMat}</td>
+                        <td class="p-3 font-semibold text-emerald-700">${depFil}</td>
+                        <td class="p-3 font-bold text-blue-600">${estTotal}</td>
+                    `;
+                }
+            }
+        };
+
+        // ==========================================================
+        // CONTROLE DO TIMER AUTOMÁTICO (3 MINUTOS)
+        // ==========================================================
+        function iniciarTimerAutoRefresh() {
+            if (timerIntervalId) clearInterval(timerIntervalId);
+
+            timerIntervalId = setInterval(() => {
+                if (!autoRefreshAtivo) return;
+
+                segundosRestantes--;
+
+                if (segundosRestantes <= 0) {
+                    segundosRestantes = INTERVALO_REFRESH_SEG;
+                    const modalAberto = !document.getElementById('modalEmail').classList.contains('hidden');
+                    if (!modalAberto && !document.hidden) {
+                        carregarDadosAPI();
+                    }
+                }
+
+                atualizarDisplayTimer();
+            }, 1000);
+        }
+
+        function atualizarDisplayTimer() {
+            const el = document.getElementById('textoTimerRefresh');
+            if (!el) return;
+
+            if (!autoRefreshAtivo) {
+                el.innerText = 'Auto: Pausado';
+                return;
+            }
+
+            const min = String(Math.floor(segundosRestantes / 60)).padStart(2, '0');
+            const seg = String(segundosRestantes % 60).padStart(2, '0');
+            el.innerText = `Auto: ${min}:${seg}`;
+        }
+
+        function alternarAutoRefresh() {
+            autoRefreshAtivo = !autoRefreshAtivo;
+            const btn = document.getElementById('btnAutoRefresh');
+
+            if (autoRefreshAtivo) {
+                segundosRestantes = INTERVALO_REFRESH_SEG;
+                btn.className = 'bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-600/30 text-xs font-mono px-3 py-1.5 rounded-lg transition flex items-center gap-1.5';
+                btn.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+            } else {
+                btn.className = 'bg-slate-800 border border-slate-600 text-slate-400 hover:bg-slate-700 text-xs font-mono px-3 py-1.5 rounded-lg transition flex items-center gap-1.5';
+                btn.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-slate-500';
+            }
+            atualizarDisplayTimer();
+        }
+
+        // ==========================================================
+        // NAVEGAÇÃO ENTRE ABAS E DATAS
+        // ==========================================================
+        function mudarSecaoPrincipal(secao) {
+            const secDash = document.getElementById('secao-dashboard');
+            const secGraf = document.getElementById('secao-graficos');
+            const secRel  = document.getElementById('secao-relatorios');
+
+            const btnDash = document.getElementById('nav-dashboard');
+            const btnGraf = document.getElementById('nav-graficos');
+            const btnRel  = document.getElementById('nav-relatorios');
+
+            secDash.classList.add('hidden');
+            secGraf.classList.add('hidden');
+            secRel.classList.add('hidden');
+
+            const inactiveClass = 'px-5 py-2.5 text-sm font-medium rounded-t-lg text-slate-300 hover:text-white hover:bg-slate-700/60 transition';
+            const activeClass   = 'px-5 py-2.5 text-sm font-semibold rounded-t-lg bg-slate-50 text-indigo-700 border-t-2 border-indigo-500 transition';
+
+            btnDash.className = inactiveClass;
+            btnGraf.className = inactiveClass;
+            btnRel.className  = inactiveClass;
+
+            if (secao === 'dashboard') {
+                secDash.classList.remove('hidden');
+                btnDash.className = activeClass;
+            } else if (secao === 'graficos') {
+                secGraf.classList.remove('hidden');
+                btnGraf.className = activeClass;
+            } else if (secao === 'relatorios') {
+                secRel.classList.remove('hidden');
+                btnRel.className  = activeClass;
+            }
+        }
+
+        function mudarSubAba(novaAba) {
+            abaAtual = novaAba;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.aba === novaAba) {
+                    btn.className = 'tab-btn px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 border-indigo-600 text-indigo-700 bg-white';
+                } else {
+                    btn.className = 'tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg';
+                }
+            });
+            carregarTabelaAba();
+        }
+
+        function obterDataHojeISO() {
+            const agora = new Date();
+            const offset = agora.getTimezoneOffset() * 60000;
+            return new Date(agora.getTime() - offset).toISOString().split('T')[0];
+        }
+
+        function subtrairUmMesISO(dataISO) {
+            if (!dataISO) return '';
+            const [ano, mes, dia] = dataISO.split('-').map(Number);
+            const dataTarget = new Date(ano, mes - 2, 1);
+            const ultimoDiaMesAnterior = new Date(dataTarget.getFullYear(), dataTarget.getMonth() + 1, 0).getDate();
+            const diaAjustado = Math.min(dia, ultimoDiaMesAnterior);
+            
+            const y = dataTarget.getFullYear();
+            const m = String(dataTarget.getMonth() + 1).padStart(2, '0');
+            const d = String(diaAjustado).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function subtrairUmAnoISO(dataISO) {
+            if (!dataISO) return '';
+            const [ano, mes, dia] = dataISO.split('-').map(Number);
+            const y = ano - 1;
+            let d = dia;
+            if (mes === 2 && dia === 29) {
+                const isLeap = (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+                if (!isLeap) d = 28;
+            }
+            return `${y}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        }
+
+        function sincronizarDatasComparativas() {
+            const dtIni = document.getElementById('filtroDataIni').value;
+            const dtFim = document.getElementById('filtroDataFim').value;
+            
+            document.getElementById('compDataIni').value = subtrairUmMesISO(dtIni);
+            document.getElementById('compDataFim').value = subtrairUmMesISO(dtFim);
+
+            document.getElementById('compAnoDataIni').value = subtrairUmAnoISO(dtIni);
+            document.getElementById('compAnoDataFim').value = subtrairUmAnoISO(dtFim);
+        }
+
+        function aoMudarPeriodoPrincipal() {
+            const iniEl = document.getElementById('filtroDataIni');
+            const fimEl = document.getElementById('filtroDataFim');
+            if (iniEl.value && fimEl.value && fimEl.value < iniEl.value) {
+                fimEl.value = iniEl.value;
+            }
+            sincronizarDatasComparativas();
+            carregarDadosAPI();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hoje = obterDataHojeISO();
+            document.getElementById('filtroFilial').value = ''; // Garante iniciar com Todas as Filiais
+            document.getElementById('filtroDataIni').value = hoje;
+            document.getElementById('filtroDataFim').value = hoje;
+            sincronizarDatasComparativas();
+            carregarDadosAPI();
+            iniciarTimerAutoRefresh();
+        });
+
+        function getHeadersAuth() {
+            const credentials = btoa(`${USUARIO_PROTHEUS}:${SENHA_PROTHEUS}`);
+            return {
+                'Authorization': `Basic ${credentials}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        async function carregarDadosAPI() {
+            // Reinicia o contador de 3 minutos sempre que houver uma atualização
+            segundosRestantes = INTERVALO_REFRESH_SEG;
+            atualizarDisplayTimer();
+
+            await Promise.allSettled([
+                carregarResumoPrincipal(),
+                carregarComparativoMes(),
+                carregarComparativoAno(),
+                carregarDesempenhoLoja(),
+                carregarGraficosDashboard(),
+                carregarTabelaAba()
+            ]);
+        }
+
+        async function carregarResumoPrincipal() {
+            const dtIni  = document.getElementById('filtroDataIni').value.replaceAll('-', '');
+            const dtFim  = document.getElementById('filtroDataFim').value.replaceAll('-', '');
+            const filial = document.getElementById('filtroFilial').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, {
+                    method: 'GET',
+                    headers: getHeadersAuth()
+                });
+
+                if (res.ok) {
+                    const json = await res.json();
+                    let cuponsAtual = 0;
+                    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                        const r = json.data[0];
+                        resumoAtual = {
+                            fat: Number(r.faturamento || 0),
+                            margem: Number(r.margem_perc || 0),
+                            ticket: Number(r.ticket_medio || 0)
+                        };
+                        cuponsAtual = Number(r.cupons || 0);
+                    } else {
+                        resumoAtual = { fat: 0, margem: 0, ticket: 0 };
+                    }
+
+                    document.getElementById('kpiFat').innerText    = `R$ ${resumoAtual.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    document.getElementById('kpiTicket').innerText = `R$ ${resumoAtual.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    document.getElementById('kpiCupons').innerText = `${cuponsAtual.toLocaleString('pt-BR')} cupons`;
+
+                    const elMargem = document.getElementById('kpiMargem');
+                    elMargem.innerText = `${resumoAtual.margem.toFixed(1)}%`;
+                    elMargem.className = resumoAtual.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-emerald-600';
+
+                    atualizarBadgesVariacao();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar resumo principal:', error);
+            }
+        }
+
+        async function carregarComparativoMes() {
+            const dtIni  = document.getElementById('compDataIni').value.replaceAll('-', '');
+            const dtFim  = document.getElementById('compDataFim').value.replaceAll('-', '');
+            const filial = document.getElementById('filtroFilial').value;
+
+            if (!dtIni || !dtFim) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, {
+                    method: 'GET',
+                    headers: getHeadersAuth()
+                });
+
+                if (res.ok) {
+                    const json = await res.json();
+                    let cupons = 0;
+                    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                        const r = json.data[0];
+                        resumoCompMes = {
+                            fat: Number(r.faturamento || 0),
+                            margem: Number(r.margem_perc || 0),
+                            ticket: Number(r.ticket_medio || 0)
+                        };
+                        cupons = Number(r.cupons || 0);
+                    } else {
+                        resumoCompMes = { fat: 0, margem: 0, ticket: 0 };
+                    }
+
+                    document.getElementById('compFat').innerText    = `R$ ${resumoCompMes.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    document.getElementById('compTicket').innerText = `R$ ${resumoCompMes.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    document.getElementById('compCupons').innerText = `${cupons.toLocaleString('pt-BR')} cupons`;
+
+                    const elCompMargem = document.getElementById('compMargem');
+                    elCompMargem.innerText = `${resumoCompMes.margem.toFixed(1)}%`;
+                    elCompMargem.className = resumoCompMes.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-slate-700';
+
+                    atualizarBadgesVariacao();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar comparativo mês:', error);
+            }
+        }
+
+        async function carregarComparativoAno() {
+            const dtIni  = document.getElementById('compAnoDataIni').value.replaceAll('-', '');
+            const dtFim  = document.getElementById('compAnoDataFim').value.replaceAll('-', '');
+            const filial = document.getElementById('filtroFilial').value;
+
+            if (!dtIni || !dtFim) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, {
+                    method: 'GET',
+                    headers: getHeadersAuth()
+                });
+
+                if (res.ok) {
+                    const json = await res.json();
+                    let cupons = 0;
+                    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                        const r = json.data[0];
+                        resumoCompAno = {
+                            fat: Number(r.faturamento || 0),
+                            margem: Number(r.margem_perc || 0),
+                            ticket: Number(r.ticket_medio || 0)
+                        };
+                        cupons = Number(r.cupons || 0);
+                    } else {
+                        resumoCompAno = { fat: 0, margem: 0, ticket: 0 };
+                    }
+
+                    document.getElementById('compAnoFat').innerText    = `R$ ${resumoCompAno.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    document.getElementById('compAnoTicket').innerText = `R$ ${resumoCompAno.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    document.getElementById('compAnoCupons').innerText = `${cupons.toLocaleString('pt-BR')} cupons`;
+
+                    const elCompAnoMargem = document.getElementById('compAnoMargem');
+                    elCompAnoMargem.innerText = `${resumoCompAno.margem.toFixed(1)}%`;
+                    elCompAnoMargem.className = resumoCompAno.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-slate-700';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar comparativo ano:', error);
+            }
+        }
+
+        function atualizarBadgesVariacao() {
+            const varFat = resumoCompMes.fat > 0 ? ((resumoAtual.fat - resumoCompMes.fat) / resumoCompMes.fat) * 100 : 0;
+            aplicarEstiloBadge('badgeVarFat', varFat, '% vs ant.');
+
+            const varMargem = resumoAtual.margem - resumoCompMes.margem;
+            aplicarEstiloBadge('badgeVarMargem', varMargem, ' p.p.');
+
+            const varTicket = resumoCompMes.ticket > 0 ? ((resumoAtual.ticket - resumoCompMes.ticket) / resumoCompMes.ticket) * 100 : 0;
+            aplicarEstiloBadge('badgeVarTicket', varTicket, '% vs ant.');
+        }
+
+        function aplicarEstiloBadge(elementId, valor, sufixo) {
+            const el = document.getElementById(elementId);
+            const sinal = valor > 0 ? '+' : '';
+            el.innerText = `${sinal}${valor.toFixed(1)}${sufixo}`;
+
+            if (valor > 0.05) {
+                el.className = 'text-[10px] font-semibold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700';
+            } else if (valor < -0.05) {
+                el.className = 'text-[10px] font-semibold px-1.5 py-0.2 rounded bg-red-50 text-red-700';
+            } else {
+                el.className = 'text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-500';
+            }
+        }
+
+        async function carregarDesempenhoLoja() {
+            const dtIni = document.getElementById('filtroDataIni').value.replaceAll('-', '');
+            const dtFim = document.getElementById('filtroDataFim').value.replaceAll('-', '');
+            const tbody = document.getElementById('tbodyDesempenhoLoja');
+
+            try {
+                const res = await fetch(`${API_BASE}/relatorios?tipo=desempenho_loja&dataIni=${dtIni}&dataFim=${dtFim}`, {
+                    method: 'GET',
+                    headers: getHeadersAuth()
+                });
+
+                if (res.ok) {
+                    const json = await res.json();
+                    dadosLojasGlobais = json.data || [];
+
+                    if (dadosLojasGlobais.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Nenhuma venda registrada nas lojas para o período selecionado.</td></tr>`;
+                        return;
+                    }
+
+                    tbody.innerHTML = dadosLojasGlobais.map(item => `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-1.5 px-4 font-semibold text-slate-900">${item.loja}</td>
+                            <td class="py-1.5 px-4 text-slate-600">${Number(item.vendas || 0).toLocaleString('pt-BR')}</td>
+                            <td class="py-1.5 px-4 font-semibold text-blue-600">R$ ${Number(item.fat || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td class="py-1.5 px-4 font-semibold text-blue-600">R$ ${Number(item.ticket || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td class="py-1.5 px-4 font-semibold text-emerald-600">${Number(item.part || 0).toFixed(1)}%</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar desempenho por loja:', error);
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 text-xs">Erro ao consultar desempenho por loja.</td></tr>`;
+            }
+        }
+
+        function exportarExcelLojas() {
+            if (!dadosLojasGlobais.length) return alert('Não há dados de lojas para exportar.');
+            const formatados = dadosLojasGlobais.map(l => ({
+                'Loja / Cliente': l.loja,
+                'Vendas': l.vendas,
+                'Faturamento (R$)': l.fat,
+                'Ticket Médio (R$)': l.ticket,
+                'Part. (%)': Number(l.part || 0).toFixed(1) + '%'
+            }));
+            const ws = XLSX.utils.json_to_sheet(formatados);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Desempenho_Lojas');
+            const dtIni = document.getElementById('filtroDataIni').value;
+            const dtFim = document.getElementById('filtroDataFim').value;
+            XLSX.writeFile(wb, `Desempenho_Lojas_${dtIni}_a_${dtFim}.xlsx`);
+        }
+
+        // ==========================================================
+        // GRÁFICOS DO DASHBOARD
+        // ==========================================================
+        async function carregarGraficosDashboard() {
+            const dtIni  = document.getElementById('filtroDataIni').value.replaceAll('-', '');
+            const dtFim  = document.getElementById('filtroDataFim').value.replaceAll('-', '');
+            const filial = document.getElementById('filtroFilial').value;
+
+            try {
+                const [resMerc, resTop10, resTop10Q, resDepto, res30D, res30DF01, res30DF02] = await Promise.all([
+                    fetch(`${API_BASE}/relatorios?tipo=fat_mercadologico&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
+                    fetch(`${API_BASE}/relatorios?tipo=top10_produtos&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
+                    fetch(`${API_BASE}/relatorios?tipo=top10_qtd&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
+                    fetch(`${API_BASE}/relatorios?tipo=fat_setor&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
+                    fetch(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
+                    fetch(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=01`, { headers: getHeadersAuth() }),
+                    fetch(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=02`, { headers: getHeadersAuth() })
+                ]);
+
+                if (resMerc.ok) {
+                    const jsonMerc = await resMerc.json();
+                    renderizarGraficosTop10Mercadologicos(jsonMerc.data || []);
+                }
+                if (resTop10.ok) {
+                    const jsonTop10 = await resTop10.json();
+                    renderizarGraficoTop10(jsonTop10.data || []);
+                }
+                if (resTop10Q.ok) {
+                    const jsonTop10Q = await resTop10Q.json();
+                    renderizarGraficoTop10Qtd(jsonTop10Q.data || []);
+                }
+                if (resDepto.ok) {
+                    const jsonDepto = await resDepto.json();
+                    renderizarGraficoDepartamento(jsonDepto.data || []);
+                }
+                if (res30D.ok) {
+                    const json30D = await res30D.json();
+                    chartFat30Instance = renderizarGraficoBarras30Dias(
+                        'graficoFat30Dias',
+                        chartFat30Instance,
+                        json30D.data || [],
+                        'rgba(245, 158, 11, 0.85)',
+                        'rgb(245, 158, 11)'
+                    );
+                }
+                if (res30DF01.ok) {
+                    const json30DF01 = await res30DF01.json();
+                    chartFat30F01Instance = renderizarGraficoBarras30Dias(
+                        'graficoFat30DiasF01',
+                        chartFat30F01Instance,
+                        json30DF01.data || [],
+                        'rgba(99, 102, 241, 0.85)',
+                        'rgb(99, 102, 241)'
+                    );
+                }
+                if (res30DF02.ok) {
+                    const json30DF02 = await res30DF02.json();
+                    chartFat30F02Instance = renderizarGraficoBarras30Dias(
+                        'graficoFat30DiasF02',
+                        chartFat30F02Instance,
+                        json30DF02.data || [],
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgb(16, 185, 129)'
+                    );
+                }
+            } catch (error) {
+                console.error('Erro ao carregar gráficos:', error);
+            }
+        }
+
+        function renderizarGraficosTop10Mercadologicos(dados) {
+            const ctxFat = document.getElementById('graficoTop10MercFat').getContext('2d');
+            if (chartTop10MercFatInst) chartTop10MercFatInst.destroy();
+
+            const top10Fat = [...dados].sort((a, b) => Number(b.faturamento || 0) - Number(a.faturamento || 0)).slice(0, 10);
+            const labelsFat = top10Fat.map(d => {
+                const desc = d.descricao || 'SEM DESCRIÇÃO';
+                const descCurta = desc.length > 22 ? desc.substring(0, 22) + '...' : desc;
+                return `${d.codigo ? d.codigo + ' - ' : ''}${descCurta}`;
+            });
+            const valoresFat = top10Fat.map(d => Number(d.faturamento || 0));
+
+            chartTop10MercFatInst = new Chart(ctxFat, {
+                type: 'bar',
+                data: {
+                    labels: labelsFat,
+                    datasets: [{
+                        label: 'Faturamento (R$)',
+                        data: valoresFat,
+                        backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                        borderColor: 'rgb(79, 70, 229)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    const item = top10Fat[items[0].dataIndex];
+                                    return `${item.codigo ? item.codigo + ' - ' : ''}${item.descricao || 'SEM DESCRIÇÃO'}`;
+                                },
+                                label: (c) => ` Faturamento: R$ ${Number(c.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { font: { size: 10 }, callback: (v) => 'R$ ' + Number(v).toLocaleString('pt-BR') } },
+                        y: { ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            const ctxQtd = document.getElementById('graficoTop10MercQtd').getContext('2d');
+            if (chartTop10MercQtdInst) chartTop10MercQtdInst.destroy();
+
+            const top10Qtd = [...dados].sort((a, b) => Number(b.qtd || 0) - Number(a.qtd || 0)).slice(0, 10);
+            const labelsQtd = top10Qtd.map(d => {
+                const desc = d.descricao || 'SEM DESCRIÇÃO';
+                const descCurta = desc.length > 22 ? desc.substring(0, 22) + '...' : desc;
+                return `${d.codigo ? d.codigo + ' - ' : ''}${descCurta}`;
+            });
+            const valoresQtd = top10Qtd.map(d => Number(d.qtd || 0));
+
+            chartTop10MercQtdInst = new Chart(ctxQtd, {
+                type: 'bar',
+                data: {
+                    labels: labelsQtd,
+                    datasets: [{
+                        label: 'Quantidade (un)',
+                        data: valoresQtd,
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderColor: 'rgb(16, 185, 129)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    const item = top10Qtd[items[0].dataIndex];
+                                    return `${item.codigo ? item.codigo + ' - ' : ''}${item.descricao || 'SEM DESCRIÇÃO'}`;
+                                },
+                                label: (c) => ` Quantidade: ${Number(c.raw).toLocaleString('pt-BR')} un`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { font: { size: 10 }, callback: (v) => Number(v).toLocaleString('pt-BR') + ' un' } },
+                        y: { ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderizarGraficoTop10(dados) {
+            const ctx = document.getElementById('graficoTop10Produtos').getContext('2d');
+            if (chartTop10Instance) chartTop10Instance.destroy();
+            const labels  = dados.map(d => d.desc.length > 20 ? d.desc.substring(0, 20) + '...' : d.desc);
+            const valores = dados.map(d => Number(d.total || 0));
+
+            chartTop10Instance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Faturamento (R$)',
+                        data: valores,
+                        backgroundColor: 'rgba(79, 70, 229, 0.85)',
+                        borderColor: 'rgb(79, 70, 229)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => dados[items[0].dataIndex].desc,
+                                label: (c) => ` R$ ${Number(c.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { font: { size: 10 }, callback: (v) => 'R$ ' + Number(v).toLocaleString('pt-BR') } },
+                        y: { ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderizarGraficoTop10Qtd(dados) {
+            const ctx = document.getElementById('graficoTop10Qtd').getContext('2d');
+            if (chartTop10QtdInst) chartTop10QtdInst.destroy();
+            const labels  = dados.map(d => d.desc.length > 20 ? d.desc.substring(0, 20) + '...' : d.desc);
+            const valores = dados.map(d => Number(d.qtd || 0));
+
+            chartTop10QtdInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: valores,
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderColor: 'rgb(16, 185, 129)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => dados[items[0].dataIndex].desc,
+                                label: (c) => ` ${Number(c.raw).toLocaleString('pt-BR')} un`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { font: { size: 10 }, callback: (v) => Number(v).toLocaleString('pt-BR') + ' un' } },
+                        y: { ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderizarGraficoDepartamento(dados) {
+            const ctx = document.getElementById('graficoDepartamento').getContext('2d');
+            if (chartDeptoInstance) chartDeptoInstance.destroy();
+            
+            const topDepto = [...dados]
+                .sort((a, b) => Number(b.faturamento ?? b.total ?? 0) - Number(a.faturamento ?? a.total ?? 0))
+                .slice(0, 10);
+
+            const labels = topDepto.map(d => d.setor || d.descricao || 'SEM DEPARTAMENTO');
+            const valores = topDepto.map(d => Number(d.faturamento ?? d.total ?? 0));
+
+            chartDeptoInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: ['#4f46e5', '#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } },
+                        tooltip: { callbacks: { label: (c) => ` ${c.label}: R$ ${Number(c.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` } }
+                    }
+                }
+            });
+        }
+
+        function renderizarGraficoBarras30Dias(canvasId, instanciaAnterior, dados, bgColor, borderColor) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (instanciaAnterior) instanciaAnterior.destroy();
+            
+            const labels = dados.map(d => {
+                let s = String(d.data);
+                return s.length === 8 ? `${s.substring(6,8)}/${s.substring(4,6)}` : s;
+            });
+            const valores = dados.map(d => Number(d.total || 0));
+
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Faturamento Diário (R$)',
+                        data: valores,
+                        backgroundColor: bgColor,
+                        borderColor: borderColor,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => ` R$ ${Number(context.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: { size: 10 },
+                                callback: (val) => 'R$ ' + Number(val).toLocaleString('pt-BR')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==========================================================
+        // TABELAS DA ABA DE RELATÓRIOS DETALHADOS
+        // ==========================================================
+        async function carregarTabelaAba() {
+            const config = CONFIG_ABAS[abaAtual];
+            document.getElementById('tituloRelatorio').innerText = config.titulo;
+            document.getElementById('theadRelatorio').innerHTML = `<tr>${config.colunas.map(c => `<th class="p-3">${c}</th>`).join('')}</tr>`;
+            document.getElementById('tbodyRelatorio').innerHTML = `<tr><td colspan="${config.colunas.length}" class="p-8 text-center text-slate-400">Consultando Protheus...</td></tr>`;
+
+            const dtIni  = document.getElementById('filtroDataIni').value.replaceAll('-', '');
+            const dtFim  = document.getElementById('filtroDataFim').value.replaceAll('-', '');
+            const filial = document.getElementById('filtroFilial').value;
+
+            try {
+                const resTabela = await fetch(`${API_BASE}/relatorios?tipo=${abaAtual}&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, {
+                    method: 'GET',
+                    headers: getHeadersAuth()
+                });
+
+                if (!resTabela.ok) throw new Error(`Erro HTTP ${resTabela.status}`);
+                const jsonTabela = await resTabela.json();
+
+                if (jsonTabela.success) {
+                    dadosGlobais = jsonTabela.data || [];
+                    renderizarTabela(dadosGlobais);
+                    // Preserva o filtro digitado caso o auto-refresh atualize os dados
+                    if (document.getElementById('buscaTabela').value.trim() !== '') {
+                        filtrarTabela();
+                    }
+                } else {
+                    document.getElementById('tbodyRelatorio').innerHTML = `<tr><td colspan="${config.colunas.length}" class="p-8 text-center text-red-500">Erro ao processar dados no Protheus.</td></tr>`;
+                }
+            } catch (error) {
+                console.error('Falha na integração Protheus:', error);
+                document.getElementById('tbodyRelatorio').innerHTML = `<tr><td colspan="${config.colunas.length}" class="p-8 text-center text-red-500">Falha de conexão ou autenticação com o servidor Protheus.</td></tr>`;
+            }
+        }
+
+        function renderizarTabela(lista) {
+            const config = CONFIG_ABAS[abaAtual];
+            const tbody = document.getElementById('tbodyRelatorio');
+
+            if (!lista || lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${config.colunas.length}" class="p-8 text-center text-slate-400">Nenhum registro encontrado para os filtros selecionados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = lista.map(item => `<tr class="hover:bg-slate-50 transition">${config.render(item)}</tr>`).join('');
+        }
+
+        function filtrarTabela() {
+            const termo = document.getElementById('buscaTabela').value.toLowerCase();
+            const filtrados = dadosGlobais.filter(obj => 
+                Object.values(obj).some(val => String(val).toLowerCase().includes(termo))
+            );
+            renderizarTabela(filtrados);
+        }
+
+        function exportarExcel() {
+            if (!dadosGlobais.length) return alert('Não há dados na tabela para exportar.');
+            const ws = XLSX.utils.json_to_sheet(dadosGlobais);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, abaAtual);
+            const dtIni = document.getElementById('filtroDataIni').value;
+            const dtFim = document.getElementById('filtroDataFim').value;
+            XLSX.writeFile(wb, `Painel_${abaAtual}_${dtIni}_a_${dtFim}.xlsx`);
+        }
+
+        // ==========================================================
+        // MODAL E ENVIO DE E-MAIL (DASHBOARD COMPLETO + RELATÓRIOS)
+        // ==========================================================
+        function abrirModalEmail(modo = 'relatorio') {
+            modoEnvioEmail = modo;
+            const tituloModal = document.querySelector('#modalEmail h3');
+            if (tituloModal) {
+                tituloModal.innerText = modo === 'dashboard'
+                    ? 'Enviar Dashboard Executivo por E-mail'
+                    : `Enviar Relatório: ${CONFIG_ABAS[abaAtual].titulo}`;
+            }
+            document.getElementById('emailDestinatario').value = '';
+            document.getElementById('modalEmail').classList.remove('hidden');
+            document.getElementById('modalEmail').classList.add('flex');
+        }
+
+        function fecharModalEmail() {
+            document.getElementById('modalEmail').classList.add('hidden');
+            document.getElementById('modalEmail').classList.remove('flex');
+        }
+
+        function montarHtmlDashboardEmail(textoFilial, dtIniFmt, dtFimFmt) {
+            const fmtMoeda = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            const fmtPct   = (v) => `${Number(v || 0).toFixed(1)}%`;
+
+            const cuponsAtual = document.getElementById('kpiCupons').innerText;
+            const badgeFat    = document.getElementById('badgeVarFat').innerText;
+            const badgeMargem = document.getElementById('badgeVarMargem').innerText;
+            const badgeTicket = document.getElementById('badgeVarTicket').innerText;
+
+            const compMesIni  = document.getElementById('compDataIni').value.split('-').reverse().join('/');
+            const compMesFim  = document.getElementById('compDataFim').value.split('-').reverse().join('/');
+            const compMesCup  = document.getElementById('compCupons').innerText;
+
+            const compAnoIni  = document.getElementById('compAnoDataIni').value.split('-').reverse().join('/');
+            const compAnoFim  = document.getElementById('compAnoDataFim').value.split('-').reverse().join('/');
+            const compAnoCup  = document.getElementById('compAnoCupons').innerText;
+
+            const corMargemAtual = resumoAtual.margem < 0 ? '#dc2626' : '#059669';
+            const corMargemMes   = resumoCompMes.margem < 0 ? '#dc2626' : '#334155';
+            const corMargemAno   = resumoCompAno.margem < 0 ? '#dc2626' : '#334155';
+
+            let linhasLojasHtml = '';
+            if (dadosLojasGlobais && dadosLojasGlobais.length > 0) {
+                linhasLojasHtml = dadosLojasGlobais.map((item, idx) => {
+                    const bg = idx % 2 === 0 ? '#ffffff' : '#f1f5f9';
+                    return `
+                        <tr style="background-color: ${bg};">
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">${item.loja}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; color: #334155;">${Number(item.vendas || 0).toLocaleString('pt-BR')}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #2563eb;">${fmtMoeda(item.fat)}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #2563eb;">${fmtMoeda(item.ticket)}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #059669;">${fmtPct(item.part)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                linhasLojasHtml = `<tr><td colspan="5" style="padding: 12px; text-align: center; border: 1px solid #cbd5e1; color: #64748b;">Nenhuma venda registrada nas lojas para o período.</td></tr>`;
+            }
+
+            return `
+                <div style="font-family: Arial, Helvetica, sans-serif; color: #1e293b; max-width: 850px; margin: 0 auto;">
+                    <!-- Cabeçalho Principal -->
+                    <div style="background-color: #0f172a; color: #ffffff; padding: 16px 20px; border-radius: 6px 6px 0 0;">
+                        <h2 style="margin: 0; font-size: 18px; font-weight: bold;">Painel Executivo Comercial — Resumo Consolidado</h2>
+                        <p style="margin: 5px 0 0 0; font-size: 12px; color: #cbd5e1;">
+                            <strong>Filial:</strong> ${textoFilial} &nbsp;|&nbsp; <strong>Período:</strong> ${dtIniFmt} até ${dtFimFmt}
+                        </p>
+                    </div>
+
+                    <!-- 1. Indicadores Principais -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 12px; border: 1px solid #cbd5e1;">
+                        <thead>
+                            <tr>
+                                <th colspan="3" style="background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: left; padding: 9px 12px; font-size: 12px; text-transform: uppercase;">
+                                    1. Indicadores do Período Atual (${dtIniFmt} a ${dtFimFmt})
+                                </th>
+                            </tr>
+                            <tr style="background-color: #e2e8f0;">
+                                <th style="padding: 8px 12px; border: 1px solid #cbd5e1; text-align: left; font-size: 11px; color: #334155; font-weight: bold;">FATURAMENTO</th>
+                                <th style="padding: 8px 12px; border: 1px solid #cbd5e1; text-align: left; font-size: 11px; color: #334155; font-weight: bold;">MARGEM BRUTA (%)</th>
+                                <th style="padding: 8px 12px; border: 1px solid #cbd5e1; text-align: left; font-size: 11px; color: #334155; font-weight: bold;">TICKET MÉDIO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background-color: #ffffff;">
+                                <td style="padding: 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 17px; font-weight: bold; color: #2563eb;">${fmtMoeda(resumoAtual.fat)}</div>
+                                    <div style="font-size: 11px; color: #64748b; margin-top: 3px;">${cuponsAtual} &nbsp;|&nbsp; <strong>${badgeFat}</strong></div>
+                                </td>
+                                <td style="padding: 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 17px; font-weight: bold; color: ${corMargemAtual};">${fmtPct(resumoAtual.margem)}</div>
+                                    <div style="font-size: 11px; color: #64748b; margin-top: 3px;">Rentabilidade &nbsp;|&nbsp; <strong>${badgeMargem}</strong></div>
+                                </td>
+                                <td style="padding: 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 17px; font-weight: bold; color: #2563eb;">${fmtMoeda(resumoAtual.ticket)}</div>
+                                    <div style="font-size: 11px; color: #64748b; margin-top: 3px;">Por Cupom &nbsp;|&nbsp; <strong>${badgeTicket}</strong></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 2. Comparativo Mês Anterior -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 14px; border: 1px solid #cbd5e1;">
+                        <thead>
+                            <tr>
+                                <th colspan="3" style="background-color: #334155; color: #ffffff; font-weight: bold; text-align: left; padding: 8px 12px; font-size: 12px; text-transform: uppercase;">
+                                    2. Comparativo — Mês Anterior (${compMesIni} a ${compMesFim})
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background-color: #f8fafc;">
+                                <td style="padding: 10px 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Fat. Mês Anterior</div>
+                                    <div style="font-size: 15px; font-weight: bold; color: #2563eb; margin-top: 2px;">${fmtMoeda(resumoCompMes.fat)}</div>
+                                    <div style="font-size: 11px; color: #64748b;">${compMesCup}</div>
+                                </td>
+                                <td style="padding: 10px 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Margem Mês Anterior</div>
+                                    <div style="font-size: 15px; font-weight: bold; color: ${corMargemMes}; margin-top: 2px;">${fmtPct(resumoCompMes.margem)}</div>
+                                    <div style="font-size: 11px; color: #64748b;">Rentabilidade</div>
+                                </td>
+                                <td style="padding: 10px 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Ticket Mês Anterior</div>
+                                    <div style="font-size: 15px; font-weight: bold; color: #2563eb; margin-top: 2px;">${fmtMoeda(resumoCompMes.ticket)}</div>
+                                    <div style="font-size: 11px; color: #64748b;">Por Cupom</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 3. Comparativo Ano Anterior -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 14px; border: 1px solid #cbd5e1;">
+                        <thead>
+                            <tr>
+                                <th colspan="3" style="background-color: #334155; color: #ffffff; font-weight: bold; text-align: left; padding: 8px 12px; font-size: 12px; text-transform: uppercase;">
+                                    3. Comparativo — Ano Anterior / YoY (${compAnoIni} a ${compAnoFim})
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background-color: #f8fafc;">
+                                <td style="padding: 10px 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Fat. Ano Anterior</div>
+                                    <div style="font-size: 15px; font-weight: bold; color: #2563eb; margin-top: 2px;">${fmtMoeda(resumoCompAno.fat)}</div>
+                                    <div style="font-size: 11px; color: #64748b;">${compAnoCup}</div>
+                                </td>
+                                <td style="padding: 10px 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Margem Ano Anterior</div>
+                                    <div style="font-size: 15px; font-weight: bold; color: ${corMargemAno}; margin-top: 2px;">${fmtPct(resumoCompAno.margem)}</div>
+                                    <div style="font-size: 11px; color: #64748b;">Rentabilidade</div>
+                                </td>
+                                <td style="padding: 10px 12px; border: 1px solid #cbd5e1; width: 33.3%;">
+                                    <div style="font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase;">Ticket Ano Anterior</div>
+                                    <div style="font-size: 15px; font-weight: bold; color: #2563eb; margin-top: 2px;">${fmtMoeda(resumoCompAno.ticket)}</div>
+                                    <div style="font-size: 11px; color: #64748b;">Por Cupom</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 4. Desempenho por Loja -->
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 14px; border: 1px solid #cbd5e1; font-size: 12px;">
+                        <thead>
+                            <tr>
+                                <th colspan="5" style="background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: left; padding: 9px 12px; font-size: 12px; text-transform: uppercase;">
+                                    4. Desempenho por Loja (${dtIniFmt} a ${dtFimFmt})
+                                </th>
+                            </tr>
+                            <tr>
+                                <th style="background-color: #334155; color: #ffffff; font-weight: bold; text-align: left; padding: 8px 12px; border: 1px solid #cbd5e1;">LOJA / CLIENTE</th>
+                                <th style="background-color: #334155; color: #ffffff; font-weight: bold; text-align: left; padding: 8px 12px; border: 1px solid #cbd5e1;">VENDAS</th>
+                                <th style="background-color: #334155; color: #ffffff; font-weight: bold; text-align: left; padding: 8px 12px; border: 1px solid #cbd5e1;">FATURAMENTO</th>
+                                <th style="background-color: #334155; color: #ffffff; font-weight: bold; text-align: left; padding: 8px 12px; border: 1px solid #cbd5e1;">TICKET MÉDIO</th>
+                                <th style="background-color: #334155; color: #ffffff; font-weight: bold; text-align: left; padding: 8px 12px; border: 1px solid #cbd5e1;">PART. (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${linhasLojasHtml}
+                        </tbody>
+                    </table>
+
+                    <p style="font-size: 11px; color: #64748b; margin-top: 12px;">
+                        Relatório gerado automaticamente pelo Painel Executivo Comercial — TOTVS Protheus.
+                    </p>
+                </div>
+            `;
+        }
+
+        async function dispararEmail() {
+            const destinatario = document.getElementById('emailDestinatario').value.trim();
+            const selectFilial = document.getElementById('filtroFilial');
+            const textoFilial  = selectFilial.options[selectFilial.selectedIndex].text;
+            const dtIniFmt     = document.getElementById('filtroDataIni').value.split('-').reverse().join('/');
+            const dtFimFmt     = document.getElementById('filtroDataFim').value.split('-').reverse().join('/');
+
+            let assuntoEmail   = '';
+            let corpoHtmlEmail = '';
+
+            if (modoEnvioEmail === 'dashboard') {
+                assuntoEmail   = `Painel Executivo - Resumo Dashboard (${dtIniFmt} a ${dtFimFmt})`;
+                corpoHtmlEmail = montarHtmlDashboardEmail(textoFilial, dtIniFmt, dtFimFmt);
+            } else {
+                const config = CONFIG_ABAS[abaAtual];
+                if (!dadosGlobais || dadosGlobais.length === 0) {
+                    return alert('Não há dados carregados na tabela atual para enviar.');
+                }
+
+                const thHtml = config.colunas.map(col =>
+                    `<th style="background-color: #1e293b; color: #ffffff; font-weight: bold; text-align: left; padding: 10px 12px; border: 1px solid #1e293b; font-size: 12px; text-transform: uppercase;">${col}</th>`
+                ).join('');
+
+                const trsHtml = dadosGlobais.map((item, idx) => {
+                    const bgCor = idx % 2 === 0 ? '#ffffff' : '#f1f5f9';
+                    const celulasBrutas = config.render(item);
+                    const celulasEstilizadas = celulasBrutas.replace(
+                        /<td([^>]*)>/gi,
+                        `<td style="padding: 8px 12px; border: 1px solid #cbd5e1; color: #1e293b; font-size: 13px; background-color: ${bgCor};">`
+                    );
+                    return `<tr style="background-color: ${bgCor};">${celulasEstilizadas}</tr>`;
+                }).join('');
+
+                assuntoEmail   = `Painel Executivo - ${config.titulo} (${dtIniFmt} a ${dtFimFmt})`;
+                corpoHtmlEmail = `
+                    <div style="font-family: Arial, Helvetica, sans-serif; color: #1e293b; max-width: 900px; margin: 0 auto;">
+                        <div style="background-color: #0f172a; color: #ffffff; padding: 14px 18px; border-radius: 6px 6px 0 0;">
+                            <h2 style="margin: 0; font-size: 16px; font-weight: bold;">${config.titulo}</h2>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: #cbd5e1;">
+                                <strong>Filial:</strong> ${textoFilial} &nbsp;|&nbsp; <strong>Período:</strong> ${dtIniFmt} até ${dtFimFmt}
+                            </p>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; border: 1px solid #cbd5e1;">
+                            <thead><tr>${thHtml}</tr></thead>
+                            <tbody>${trsHtml}</tbody>
+                        </table>
+                        <p style="font-size: 11px; color: #64748b; margin-top: 10px;">
+                            Relatório gerado automaticamente pelo Painel Executivo Comercial — TOTVS Protheus.
+                        </p>
+                    </div>
+                `;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/enviar-email`, {
+                    method: 'POST',
+                    headers: getHeadersAuth(),
+                    body: JSON.stringify({
+                        destinatario: destinatario,
+                        assunto: assuntoEmail,
+                        corpo_html: corpoHtmlEmail
+                    })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Erro HTTP ${res.status}: ${res.statusText}`);
+                }
+
+                const json = await res.json();
+                if (json.success) {
+                    alert('E-mail enviado com sucesso pelo Protheus!');
+                    fecharModalEmail();
+                } else {
+                    alert('O Protheus recusou o envio. Verifique a rotina REST e o parâmetro de e-mail.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao tentar enviar o e-mail: ' + err.message);
+            }
+        }
+
+
+    </script>
+</body>
+</html>
