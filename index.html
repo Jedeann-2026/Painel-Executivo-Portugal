@@ -22,11 +22,10 @@
             <div class="flex flex-wrap items-end gap-3">
                 <div>
                     <label for="filtroFilial" class="block text-[10px] uppercase text-slate-400 font-semibold mb-1">Filial</label>
-                    <!-- Filtro de Filial no HTML (Todas as Filiais como padrão) -->
-                    <select id="filtroFilial" onchange="carregarDadosAPI()" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500">
+                    <select id="filtroFilial" onchange="aoMudarPeriodoPrincipal()" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500">
                         <option value="" selected>Todas as Filiais</option>
-                        <option value="01">01 - Matriz</option>
-                        <option value="02">02 - Filial</option>
+                        <option value="01">01 - Matriz / Loja 01</option>
+                        <option value="02">02 - Filial 02</option>
                     </select>
                 </div>
 
@@ -41,7 +40,7 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button onclick="carregarDadosAPI()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition shadow">
+                    <button onclick="carregarDadosAPI(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-1.5 rounded-lg transition shadow">
                         Atualizar Dados
                     </button>
                     <button id="btnAutoRefresh" onclick="alternarAutoRefresh()" title="Clique para pausar/ativar atualização automática a cada 3 minutos" class="bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-600/30 text-xs font-mono px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
@@ -139,10 +138,10 @@
 
                     <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-lg border border-slate-200">
                         <span class="text-[10px] font-semibold uppercase text-slate-500 ml-1">Período:</span>
-                        <input type="date" id="compDataIni" onchange="carregarComparativoMes()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
+                        <input type="date" id="compDataIni" onchange="recalcularComparativoMesManual()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
                         <span class="text-slate-400 text-[10px]">até</span>
-                        <input type="date" id="compDataFim" onchange="carregarComparativoMes()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
-                        <button onclick="carregarComparativoMes()" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded transition">
+                        <input type="date" id="compDataFim" onchange="recalcularComparativoMesManual()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
+                        <button onclick="recalcularComparativoMesManual()" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded transition">
                             Recalcular
                         </button>
                     </div>
@@ -188,10 +187,10 @@
 
                     <div class="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-lg border border-slate-200">
                         <span class="text-[10px] font-semibold uppercase text-slate-500 ml-1">Período:</span>
-                        <input type="date" id="compAnoDataIni" onchange="carregarComparativoAno()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
+                        <input type="date" id="compAnoDataIni" onchange="recalcularComparativoAnoManual()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
                         <span class="text-slate-400 text-[10px]">até</span>
-                        <input type="date" id="compAnoDataFim" onchange="carregarComparativoAno()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
-                        <button onclick="carregarComparativoAno()" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded transition">
+                        <input type="date" id="compAnoDataFim" onchange="recalcularComparativoAnoManual()" class="bg-white border border-slate-300 text-slate-700 text-[10px] rounded px-1.5 py-1 focus:outline-none focus:border-indigo-500">
+                        <button onclick="recalcularComparativoAnoManual()" class="bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded transition">
                             Recalcular
                         </button>
                     </div>
@@ -432,7 +431,7 @@
                     <table id="tabelaRelatoriosDetalhados" class="w-full text-left border-collapse">
                         <thead id="theadRelatorio" class="bg-slate-50 text-slate-500 text-xs uppercase border-b border-slate-200"></thead>
                         <tbody id="tbodyRelatorio" class="divide-y divide-slate-100 text-sm text-slate-700">
-                            <tr><td colspan="9" class="p-8 text-center text-slate-400">Carregando dados...</td></tr>
+                            <tr><td colspan="9" class="p-8 text-center text-slate-400">Entre nesta aba para carregar os dados...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -446,9 +445,9 @@
             <h3 class="text-lg font-bold text-slate-800">Enviar Relatório por E-mail</h3>
 
             <div>
-                <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatário(s)</label>
-                <input type="text" id="emailDestinatario" placeholder="Digite os e-mails separados por ; (ex: email1@empresa.com; email2@empresa.com)" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
-                <p class="text-[11px] text-slate-500 mt-1">Se deixar em branco, o envio usará o grupo de e-mails configurado no parâmetro padrão do Protheus.</p>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatário(s) (separe por ;)</label>
+                <input type="text" id="emailDestinatario" placeholder="Digite os e-mails separados por ; (ex: a@empresa.com; b@empresa.com)" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                <p class="text-[11px] text-slate-500 mt-1">Os e-mails digitados serão enviados junto com o grupo configurado no parâmetro SX6 (MV_XMAILPN) do Protheus.</p>
             </div>
 
             <div class="flex justify-end gap-2 pt-2">
@@ -463,24 +462,37 @@
         // CONFIGURAÇÕES DE CONEXÃO E AUTENTICAÇÃO PROTHEUS
         // ==========================================================
         const API_BASE = 'http://10.10.1.105:8332/rest/api/v1/painel';
-        const USUARIO_PROTHEUS = 'admin';       // <-- Insira seu usuário do Protheus
-        const SENHA_PROTHEUS   = 'Master@2026';       // <-- Insira sua senha do Protheus
+        const USUARIO_PROTHEUS = 'jedeann';
+        const SENHA_PROTHEUS   = 'Jeda@123';
 
         // ==========================================================
-        // VARIÁVEIS GLOBAIS E TIMER DE AUTO-REFRESH (3 MINUTOS)
+        // VARIÁVEIS GLOBAIS, CACHE EM MEMÓRIA NO FRONT E ABORT CONTROLLERS
         // ==========================================================
-        const INTERVALO_REFRESH_SEG = 180; // 3 minutos = 180 segundos
+        const INTERVALO_REFRESH_SEG = 180; // 3 minutos
         let segundosRestantes = INTERVALO_REFRESH_SEG;
         let autoRefreshAtivo  = true;
         let timerIntervalId   = null;
+        let debounceFiltroId  = null;
 
+        let secaoPrincipalAtual = 'dashboard';
         let abaAtual = 'fat_setor';
         let modoEnvioEmail = 'relatorio';
-        let dadosGlobais = [];
+
+        // Controllers para cancelar requisições pendentes ao mudar filtro ou aba
+        let ctrlDashboard  = null;
+        let ctrlGraficos   = null;
+        let ctrlRelatorios = null;
+
+        // Assinaturas de filtro já carregadas (cada aba só consulta ao entrar se o filtro mudou)
+        let assinaturaDashboardCarregada = '';
+        let assinaturaGraficosCarregada  = '';
+        const cacheSubAbasMemoria        = {}; // { [aba]: { assinatura: '...', dados: [...] } }
+
+        let dadosGlobais      = [];
         let dadosLojasGlobais = [];
-        let resumoAtual = { fat: 0, margem: 0, ticket: 0 };
-        let resumoCompMes  = { fat: 0, margem: 0, ticket: 0 };
-        let resumoCompAno  = { fat: 0, margem: 0, ticket: 0 };
+        let resumoAtual       = { fat: 0, margem: 0, ticket: 0 };
+        let resumoCompMes     = { fat: 0, margem: 0, ticket: 0 };
+        let resumoCompAno     = { fat: 0, margem: 0, ticket: 0 };
 
         let chartTop10MercFatInst = null;
         let chartTop10MercQtdInst = null;
@@ -496,13 +508,13 @@
                 titulo: 'Faturamento por Setor',
                 colunas: ['Setor', 'Faturamento (R$)', 'Custo (R$)', 'Margem (%)'],
                 render: (item) => {
-                    const fat = Number(item.faturamento || 0);
-                    const custo = Number(item.custo || 0);
+                    const fat = Number(item?.faturamento || 0);
+                    const custo = Number(item?.custo || 0);
                     const margem = fat > 0 ? (((fat - custo) / fat) * 100) : 0;
                     const margemStr = margem.toFixed(1) + '%';
                     const corMargem = margem < 0 ? 'text-red-600 font-bold' : 'text-emerald-600 font-semibold';
                     return `
-                        <td class="p-3 font-medium">${item.setor || 'SEM SETOR'}</td>
+                        <td class="p-3 font-medium">${item?.setor || 'SEM SETOR'}</td>
                         <td class="p-3 font-semibold text-blue-600">R$ ${fat.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                         <td class="p-3 text-slate-500">R$ ${custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                         <td class="p-3 ${corMargem}">${margemStr}</td>
@@ -513,79 +525,79 @@
                 titulo: 'Faturamento por Código Mercadológico',
                 colunas: ['Código', 'Grupo Mercadológico', 'Qtd Vendida', 'Faturamento (R$)'],
                 render: (item) => `
-                    <td class="p-3 font-mono text-xs">${item.codigo || '-'}</td>
-                    <td class="p-3 font-medium">${item.descricao || 'SEM MERCADOLÓGICO'}</td>
-                    <td class="p-3">${Number(item.qtd || 0).toLocaleString('pt-BR')}</td>
-                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item.faturamento || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 font-mono text-xs">${item?.codigo || '-'}</td>
+                    <td class="p-3 font-medium">${item?.descricao || 'SEM MERCADOLÓGICO'}</td>
+                    <td class="p-3">${Number(item?.qtd || 0).toLocaleString('pt-BR')}</td>
+                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item?.faturamento || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                 `
             },
             fat_produto: {
                 titulo: 'Faturamento por Produto',
                 colunas: ['Código', 'Descrição', 'Setor', 'Qtd Vendida', 'Total (R$)'],
                 render: (item) => `
-                    <td class="p-3 font-mono text-xs">${item.codigo}</td>
-                    <td class="p-3 font-medium">${item.desc}</td>
-                    <td class="p-3 text-slate-500">${item.setor || '-'}</td>
-                    <td class="p-3">${Number(item.qtd || 0).toLocaleString('pt-BR')}</td>
-                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item.total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 font-mono text-xs">${item?.codigo || '-'}</td>
+                    <td class="p-3 font-medium">${item?.desc || '-'}</td>
+                    <td class="p-3 text-slate-500">${item?.setor || '-'}</td>
+                    <td class="p-3">${Number(item?.qtd || 0).toLocaleString('pt-BR')}</td>
+                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item?.total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                 `
             },
             top50_semanal: {
                 titulo: 'Top 50 Produtos Mais Vendidos (Últimos 7 dias da Data Final)',
                 colunas: ['Código', 'Descrição', 'Setor', 'Qtd (7d)', 'Faturamento (R$)'],
                 render: (item) => `
-                    <td class="p-3 font-mono text-xs">${item.codigo}</td>
-                    <td class="p-3 font-medium">${item.desc}</td>
-                    <td class="p-3 text-slate-500">${item.setor || '-'}</td>
-                    <td class="p-3 font-bold text-indigo-600">${Number(item.qtd || 0).toLocaleString('pt-BR')}</td>
-                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item.total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 font-mono text-xs">${item?.codigo || '-'}</td>
+                    <td class="p-3 font-medium">${item?.desc || '-'}</td>
+                    <td class="p-3 text-slate-500">${item?.setor || '-'}</td>
+                    <td class="p-3 font-bold text-indigo-600">${Number(item?.qtd || 0).toLocaleString('pt-BR')}</td>
+                    <td class="p-3 font-semibold text-blue-600">R$ ${Number(item?.total || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                 `
             },
             sem_giro: {
                 titulo: 'Produtos Com Saldo e Sem Giro (Últimos 7 dias)',
                 colunas: ['Código', 'Descrição', 'Setor', 'Saldo Atual'],
                 render: (item) => `
-                    <td class="p-3 font-mono text-xs">${item.codigo}</td>
-                    <td class="p-3 font-medium">${item.desc}</td>
-                    <td class="p-3 text-slate-500">${item.setor || '-'}</td>
-                    <td class="p-3 font-bold text-amber-600">${Number(item.saldo || 0).toLocaleString('pt-BR')}</td>
+                    <td class="p-3 font-mono text-xs">${item?.codigo || '-'}</td>
+                    <td class="p-3 font-medium">${item?.desc || '-'}</td>
+                    <td class="p-3 text-slate-500">${item?.setor || '-'}</td>
+                    <td class="p-3 font-bold text-amber-600">${Number(item?.saldo || 0).toLocaleString('pt-BR')}</td>
                 `
             },
             avarias: {
                 titulo: 'Avarias / Movimentações Internas por Setor',
                 colunas: ['Setor', 'Avaria no Período (R$)', 'Avaria Acumulada 30d (R$)'],
                 render: (item) => `
-                    <td class="p-3 font-medium">${item.setor || 'SEM SETOR'}</td>
-                    <td class="p-3 font-semibold text-red-600">R$ ${Number(item.avaria_dia || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td class="p-3 font-semibold text-slate-700">R$ ${Number(item.avaria_mes || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 font-medium">${item?.setor || 'SEM SETOR'}</td>
+                    <td class="p-3 font-semibold text-red-600">R$ ${Number(item?.avaria_dia || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 font-semibold text-slate-700">R$ ${Number(item?.avaria_mes || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                 `
             },
             entradas_ofertas: {
                 titulo: 'Notas de Entrada Digitadas no Período',
                 colunas: ['Setor', 'Código', 'Descrição', 'Tipo', 'Custo Unit. (R$)', 'Data'],
                 render: (item) => `
-                    <td class="p-3 text-slate-500">${item.setor || '-'}</td>
-                    <td class="p-3 font-mono text-xs">${item.codigo}</td>
-                    <td class="p-3 font-medium">${item.desc}</td>
-                    <td class="p-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-semibold">${item.tipo}</span></td>
-                    <td class="p-3 font-semibold">R$ ${Number(item.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                    <td class="p-3 text-xs text-slate-500">${item.data}</td>
+                    <td class="p-3 text-slate-500">${item?.setor || '-'}</td>
+                    <td class="p-3 font-mono text-xs">${item?.codigo || '-'}</td>
+                    <td class="p-3 font-medium">${item?.desc || '-'}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-semibold">${item?.tipo || '-'}</span></td>
+                    <td class="p-3 font-semibold">R$ ${Number(item?.valor || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 text-xs text-slate-500">${item?.data || '-'}</td>
                 `
             },
             ruptura_loja: {
                 titulo: 'Ruptura de Loja (Saldo em Depósito e Zerado em Loja)',
                 colunas: ['Setor', 'Código', 'EAN', 'Descrição', 'Loja Matriz', 'Loja Filial', 'Dep. Matriz', 'Dep. Filial', 'Estoque Total'],
                 render: (item) => {
-                    const lojaMat  = Number(item.lojaMat || 0);
-                    const lojaFil  = Number(item.lojaFil || 0);
-                    const depMat   = Number(item.depMat || 0);
-                    const depFil   = Number(item.depFil || 0);
-                    const estTotal = item.estoqueTotal !== undefined ? Number(item.estoqueTotal) : (lojaMat + lojaFil + depMat + depFil);
+                    const lojaMat  = Number(item?.lojaMat || 0);
+                    const lojaFil  = Number(item?.lojaFil || 0);
+                    const depMat   = Number(item?.depMat || 0);
+                    const depFil   = Number(item?.depFil || 0);
+                    const estTotal = item?.estoqueTotal !== undefined ? Number(item.estoqueTotal) : (lojaMat + lojaFil + depMat + depFil);
                     return `
-                        <td class="p-3 text-slate-500">${item.setor || '-'}</td>
-                        <td class="p-3 font-mono text-xs">${item.codigo}</td>
-                        <td class="p-3 font-mono text-xs text-slate-500">${item.ean || '-'}</td>
-                        <td class="p-3 font-medium">${item.desc}</td>
+                        <td class="p-3 text-slate-500">${item?.setor || '-'}</td>
+                        <td class="p-3 font-mono text-xs">${item?.codigo || '-'}</td>
+                        <td class="p-3 font-mono text-xs text-slate-500">${item?.ean || '-'}</td>
+                        <td class="p-3 font-medium">${item?.desc || '-'}</td>
                         <td class="p-3 font-bold ${lojaMat === 0 ? 'text-red-600' : 'text-slate-700'}">${lojaMat}</td>
                         <td class="p-3 font-bold ${lojaFil === 0 ? 'text-red-600' : 'text-slate-700'}">${lojaFil}</td>
                         <td class="p-3 font-semibold text-emerald-700">${depMat}</td>
@@ -595,6 +607,41 @@
                 }
             }
         };
+
+        // ==========================================================
+        // HELPERS DE FILTRO E FETCH BLINDADO
+        // ==========================================================
+        function getAssinaturaFiltroAtual() {
+            const dtIni  = document.getElementById('filtroDataIni').value;
+            const dtFim  = document.getElementById('filtroDataFim').value;
+            const filial = document.getElementById('filtroFilial').value;
+            return `${filial}|${dtIni}|${dtFim}`;
+        }
+
+        function limparCacheAbasFront() {
+            assinaturaDashboardCarregada = '';
+            assinaturaGraficosCarregada  = '';
+            Object.keys(cacheSubAbasMemoria).forEach(k => delete cacheSubAbasMemoria[k]);
+        }
+
+        async function fetchProtheusJson(url, signal) {
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: getHeadersAuth(),
+                signal: signal
+            });
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            const json = await res.json();
+            if (!json || typeof json !== 'object') {
+                return { success: false, data: [] };
+            }
+            return {
+                success: Boolean(json.success),
+                data: Array.isArray(json.data) ? json.data : []
+            };
+        }
 
         // ==========================================================
         // CONTROLE DO TIMER AUTOMÁTICO (3 MINUTOS)
@@ -611,7 +658,7 @@
                     segundosRestantes = INTERVALO_REFRESH_SEG;
                     const modalAberto = !document.getElementById('modalEmail').classList.contains('hidden');
                     if (!modalAberto && !document.hidden) {
-                        carregarDadosAPI();
+                        carregarDadosAPI(true);
                     }
                 }
 
@@ -649,9 +696,11 @@
         }
 
         // ==========================================================
-        // NAVEGAÇÃO ENTRE ABAS E DATAS
+        // NAVEGAÇÃO ENTRE ABAS (ATUALIZA SOMENTE QUANDO ENTRA NELAS)
         // ==========================================================
         function mudarSecaoPrincipal(secao) {
+            secaoPrincipalAtual = secao;
+
             const secDash = document.getElementById('secao-dashboard');
             const secGraf = document.getElementById('secao-graficos');
             const secRel  = document.getElementById('secao-relatorios');
@@ -671,15 +720,36 @@
             btnGraf.className = inactiveClass;
             btnRel.className  = inactiveClass;
 
+            const assinatura = getAssinaturaFiltroAtual();
+
             if (secao === 'dashboard') {
                 secDash.classList.remove('hidden');
                 btnDash.className = activeClass;
+                if (assinaturaDashboardCarregada !== assinatura) {
+                    carregarSecaoDashboard(false);
+                }
             } else if (secao === 'graficos') {
                 secGraf.classList.remove('hidden');
                 btnGraf.className = activeClass;
+                if (assinaturaGraficosCarregada !== assinatura) {
+                    carregarGraficosDashboard(false);
+                }
             } else if (secao === 'relatorios') {
                 secRel.classList.remove('hidden');
-                btnRel.className  = activeClass;
+                btnRel.className = activeClass;
+                const cacheSub = cacheSubAbasMemoria[abaAtual];
+                if (!cacheSub || cacheSub.assinatura !== assinatura) {
+                    carregarTabelaAba(false);
+                } else {
+                    dadosGlobais = cacheSub.dados;
+                    const config = CONFIG_ABAS[abaAtual];
+                    document.getElementById('tituloRelatorio').innerText = config.titulo;
+                    document.getElementById('theadRelatorio').innerHTML = `<tr>${config.colunas.map(c => `<th class="p-3">${c}</th>`).join('')}</tr>`;
+                    renderizarTabela(dadosGlobais);
+                    if (document.getElementById('buscaTabela').value.trim() !== '') {
+                        filtrarTabela();
+                    }
+                }
             }
         }
 
@@ -692,7 +762,23 @@
                     btn.className = 'tab-btn px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-t-lg';
                 }
             });
-            carregarTabelaAba();
+
+            const assinatura = getAssinaturaFiltroAtual();
+            const cacheSub   = cacheSubAbasMemoria[abaAtual];
+            const config     = CONFIG_ABAS[abaAtual];
+
+            document.getElementById('tituloRelatorio').innerText = config.titulo;
+            document.getElementById('theadRelatorio').innerHTML = `<tr>${config.colunas.map(c => `<th class="p-3">${c}</th>`).join('')}</tr>`;
+
+            if (cacheSub && cacheSub.assinatura === assinatura) {
+                dadosGlobais = cacheSub.dados;
+                renderizarTabela(dadosGlobais);
+                if (document.getElementById('buscaTabela').value.trim() !== '') {
+                    filtrarTabela();
+                }
+            } else {
+                carregarTabelaAba(false);
+            }
         }
 
         function obterDataHojeISO() {
@@ -744,16 +830,23 @@
                 fimEl.value = iniEl.value;
             }
             sincronizarDatasComparativas();
-            carregarDadosAPI();
+
+            if (debounceFiltroId) clearTimeout(debounceFiltroId);
+            debounceFiltroId = setTimeout(() => {
+                carregarDadosAPI(false);
+            }, 350);
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             const hoje = obterDataHojeISO();
-            document.getElementById('filtroFilial').value = ''; // Garante iniciar com Todas as Filiais
+            document.getElementById('filtroFilial').value = '';
             document.getElementById('filtroDataIni').value = hoje;
             document.getElementById('filtroDataFim').value = hoje;
             sincronizarDatasComparativas();
-            carregarDadosAPI();
+            atualizarDisplayTimer();
+
+            // Carrega exclusivamente a aba ativa no momento (Dashboard Executivo)
+            carregarSecaoDashboard(false);
             iniciarTimerAutoRefresh();
         });
 
@@ -765,143 +858,174 @@
             };
         }
 
-        async function carregarDadosAPI() {
-            // Reinicia o contador de 3 minutos sempre que houver uma atualização
+        // Atualiza somente a aba atualmente visível e invalida as demais para carregamento sob demanda
+        async function carregarDadosAPI(forcarAtualizacao = false) {
             segundosRestantes = INTERVALO_REFRESH_SEG;
             atualizarDisplayTimer();
 
-            await Promise.allSettled([
-                carregarResumoPrincipal(),
-                carregarComparativoMes(),
-                carregarComparativoAno(),
-                carregarDesempenhoLoja(),
-                carregarGraficosDashboard(),
-                carregarTabelaAba()
-            ]);
+            limparCacheAbasFront();
+
+            if (secaoPrincipalAtual === 'dashboard') {
+                await carregarSecaoDashboard(forcarAtualizacao);
+            } else if (secaoPrincipalAtual === 'graficos') {
+                await carregarGraficosDashboard(forcarAtualizacao);
+            } else if (secaoPrincipalAtual === 'relatorios') {
+                await carregarTabelaAba(forcarAtualizacao);
+            }
         }
 
-        async function carregarResumoPrincipal() {
+        // ==========================================================
+        // SEÇÃO 1: DASHBOARD EXECUTIVO
+        // ==========================================================
+        async function carregarSecaoDashboard(forcar = false) {
+            if (ctrlDashboard) ctrlDashboard.abort();
+            ctrlDashboard = new AbortController();
+            const signal = ctrlDashboard.signal;
+
+            const assinatura = getAssinaturaFiltroAtual();
+
+            await Promise.allSettled([
+                carregarResumoPrincipal(signal, forcar),
+                carregarComparativoMes(signal, forcar),
+                carregarComparativoAno(signal, forcar),
+                carregarDesempenhoLoja(signal, forcar)
+            ]);
+
+            if (!signal.aborted) {
+                assinaturaDashboardCarregada = assinatura;
+            }
+        }
+
+        function recalcularComparativoMesManual() {
+            carregarComparativoMes(undefined, false);
+        }
+
+        function recalcularComparativoAnoManual() {
+            carregarComparativoAno(undefined, false);
+        }
+
+        async function carregarResumoPrincipal(signal, forcar = false) {
             const dtIni  = document.getElementById('filtroDataIni').value.replaceAll('-', '');
             const dtFim  = document.getElementById('filtroDataFim').value.replaceAll('-', '');
             const filial = document.getElementById('filtroFilial').value;
+            const qForce = forcar ? '&force=1' : '';
 
             try {
-                const res = await fetch(`${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, {
-                    method: 'GET',
-                    headers: getHeadersAuth()
-                });
+                const json = await fetchProtheusJson(
+                    `${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}${qForce}`,
+                    signal
+                );
 
-                if (res.ok) {
-                    const json = await res.json();
-                    let cuponsAtual = 0;
-                    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-                        const r = json.data[0];
-                        resumoAtual = {
-                            fat: Number(r.faturamento || 0),
-                            margem: Number(r.margem_perc || 0),
-                            ticket: Number(r.ticket_medio || 0)
-                        };
-                        cuponsAtual = Number(r.cupons || 0);
-                    } else {
-                        resumoAtual = { fat: 0, margem: 0, ticket: 0 };
-                    }
-
-                    document.getElementById('kpiFat').innerText    = `R$ ${resumoAtual.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    document.getElementById('kpiTicket').innerText = `R$ ${resumoAtual.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    document.getElementById('kpiCupons').innerText = `${cuponsAtual.toLocaleString('pt-BR')} cupons`;
-
-                    const elMargem = document.getElementById('kpiMargem');
-                    elMargem.innerText = `${resumoAtual.margem.toFixed(1)}%`;
-                    elMargem.className = resumoAtual.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-emerald-600';
-
-                    atualizarBadgesVariacao();
+                let cuponsAtual = 0;
+                if (json.success && json.data.length > 0 && json.data[0]) {
+                    const r = json.data[0];
+                    resumoAtual = {
+                        fat: Number(r.faturamento || 0),
+                        margem: Number(r.margem_perc || 0),
+                        ticket: Number(r.ticket_medio || 0)
+                    };
+                    cuponsAtual = Number(r.cupons || 0);
+                } else {
+                    resumoAtual = { fat: 0, margem: 0, ticket: 0 };
                 }
+
+                document.getElementById('kpiFat').innerText    = `R$ ${resumoAtual.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('kpiTicket').innerText = `R$ ${resumoAtual.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('kpiCupons').innerText = `${cuponsAtual.toLocaleString('pt-BR')} cupons`;
+
+                const elMargem = document.getElementById('kpiMargem');
+                elMargem.innerText = `${resumoAtual.margem.toFixed(1)}%`;
+                elMargem.className = resumoAtual.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-emerald-600';
+
+                atualizarBadgesVariacao();
             } catch (error) {
-                console.error('Erro ao carregar resumo principal:', error);
+                if (error.name !== 'AbortError') {
+                    console.error('Erro ao carregar resumo principal:', error);
+                }
             }
         }
 
-        async function carregarComparativoMes() {
+        async function carregarComparativoMes(signal, forcar = false) {
             const dtIni  = document.getElementById('compDataIni').value.replaceAll('-', '');
             const dtFim  = document.getElementById('compDataFim').value.replaceAll('-', '');
             const filial = document.getElementById('filtroFilial').value;
+            const qForce = forcar ? '&force=1' : '';
 
             if (!dtIni || !dtFim) return;
 
             try {
-                const res = await fetch(`${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, {
-                    method: 'GET',
-                    headers: getHeadersAuth()
-                });
+                const json = await fetchProtheusJson(
+                    `${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}${qForce}`,
+                    signal
+                );
 
-                if (res.ok) {
-                    const json = await res.json();
-                    let cupons = 0;
-                    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-                        const r = json.data[0];
-                        resumoCompMes = {
-                            fat: Number(r.faturamento || 0),
-                            margem: Number(r.margem_perc || 0),
-                            ticket: Number(r.ticket_medio || 0)
-                        };
-                        cupons = Number(r.cupons || 0);
-                    } else {
-                        resumoCompMes = { fat: 0, margem: 0, ticket: 0 };
-                    }
-
-                    document.getElementById('compFat').innerText    = `R$ ${resumoCompMes.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    document.getElementById('compTicket').innerText = `R$ ${resumoCompMes.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    document.getElementById('compCupons').innerText = `${cupons.toLocaleString('pt-BR')} cupons`;
-
-                    const elCompMargem = document.getElementById('compMargem');
-                    elCompMargem.innerText = `${resumoCompMes.margem.toFixed(1)}%`;
-                    elCompMargem.className = resumoCompMes.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-slate-700';
-
-                    atualizarBadgesVariacao();
+                let cupons = 0;
+                if (json.success && json.data.length > 0 && json.data[0]) {
+                    const r = json.data[0];
+                    resumoCompMes = {
+                        fat: Number(r.faturamento || 0),
+                        margem: Number(r.margem_perc || 0),
+                        ticket: Number(r.ticket_medio || 0)
+                    };
+                    cupons = Number(r.cupons || 0);
+                } else {
+                    resumoCompMes = { fat: 0, margem: 0, ticket: 0 };
                 }
+
+                document.getElementById('compFat').innerText    = `R$ ${resumoCompMes.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('compTicket').innerText = `R$ ${resumoCompMes.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('compCupons').innerText = `${cupons.toLocaleString('pt-BR')} cupons`;
+
+                const elCompMargem = document.getElementById('compMargem');
+                elCompMargem.innerText = `${resumoCompMes.margem.toFixed(1)}%`;
+                elCompMargem.className = resumoCompMes.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-slate-700';
+
+                atualizarBadgesVariacao();
             } catch (error) {
-                console.error('Erro ao carregar comparativo mês:', error);
+                if (error.name !== 'AbortError') {
+                    console.error('Erro ao carregar comparativo mês:', error);
+                }
             }
         }
 
-        async function carregarComparativoAno() {
+        async function carregarComparativoAno(signal, forcar = false) {
             const dtIni  = document.getElementById('compAnoDataIni').value.replaceAll('-', '');
             const dtFim  = document.getElementById('compAnoDataFim').value.replaceAll('-', '');
             const filial = document.getElementById('filtroFilial').value;
+            const qForce = forcar ? '&force=1' : '';
 
             if (!dtIni || !dtFim) return;
 
             try {
-                const res = await fetch(`${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, {
-                    method: 'GET',
-                    headers: getHeadersAuth()
-                });
+                const json = await fetchProtheusJson(
+                    `${API_BASE}/relatorios?tipo=resumo_faturamento&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}${qForce}`,
+                    signal
+                );
 
-                if (res.ok) {
-                    const json = await res.json();
-                    let cupons = 0;
-                    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-                        const r = json.data[0];
-                        resumoCompAno = {
-                            fat: Number(r.faturamento || 0),
-                            margem: Number(r.margem_perc || 0),
-                            ticket: Number(r.ticket_medio || 0)
-                        };
-                        cupons = Number(r.cupons || 0);
-                    } else {
-                        resumoCompAno = { fat: 0, margem: 0, ticket: 0 };
-                    }
-
-                    document.getElementById('compAnoFat').innerText    = `R$ ${resumoCompAno.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    document.getElementById('compAnoTicket').innerText = `R$ ${resumoCompAno.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    document.getElementById('compAnoCupons').innerText = `${cupons.toLocaleString('pt-BR')} cupons`;
-
-                    const elCompAnoMargem = document.getElementById('compAnoMargem');
-                    elCompAnoMargem.innerText = `${resumoCompAno.margem.toFixed(1)}%`;
-                    elCompAnoMargem.className = resumoCompAno.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-slate-700';
+                let cupons = 0;
+                if (json.success && json.data.length > 0 && json.data[0]) {
+                    const r = json.data[0];
+                    resumoCompAno = {
+                        fat: Number(r.faturamento || 0),
+                        margem: Number(r.margem_perc || 0),
+                        ticket: Number(r.ticket_medio || 0)
+                    };
+                    cupons = Number(r.cupons || 0);
+                } else {
+                    resumoCompAno = { fat: 0, margem: 0, ticket: 0 };
                 }
+
+                document.getElementById('compAnoFat').innerText    = `R$ ${resumoCompAno.fat.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('compAnoTicket').innerText = `R$ ${resumoCompAno.ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('compAnoCupons').innerText = `${cupons.toLocaleString('pt-BR')} cupons`;
+
+                const elCompAnoMargem = document.getElementById('compAnoMargem');
+                elCompAnoMargem.innerText = `${resumoCompAno.margem.toFixed(1)}%`;
+                elCompAnoMargem.className = resumoCompAno.margem < 0 ? 'text-base font-bold text-red-600' : 'text-base font-bold text-slate-700';
             } catch (error) {
-                console.error('Erro ao carregar comparativo ano:', error);
+                if (error.name !== 'AbortError') {
+                    console.error('Erro ao carregar comparativo ano:', error);
+                }
             }
         }
 
@@ -930,50 +1054,50 @@
             }
         }
 
-        async function carregarDesempenhoLoja() {
-            const dtIni = document.getElementById('filtroDataIni').value.replaceAll('-', '');
-            const dtFim = document.getElementById('filtroDataFim').value.replaceAll('-', '');
-            const tbody = document.getElementById('tbodyDesempenhoLoja');
+        async function carregarDesempenhoLoja(signal, forcar = false) {
+            const dtIni  = document.getElementById('filtroDataIni').value.replaceAll('-', '');
+            const dtFim  = document.getElementById('filtroDataFim').value.replaceAll('-', '');
+            const qForce = forcar ? '&force=1' : '';
+            const tbody  = document.getElementById('tbodyDesempenhoLoja');
 
             try {
-                const res = await fetch(`${API_BASE}/relatorios?tipo=desempenho_loja&dataIni=${dtIni}&dataFim=${dtFim}`, {
-                    method: 'GET',
-                    headers: getHeadersAuth()
-                });
+                const json = await fetchProtheusJson(
+                    `${API_BASE}/relatorios?tipo=desempenho_loja&dataIni=${dtIni}&dataFim=${dtFim}${qForce}`,
+                    signal
+                );
 
-                if (res.ok) {
-                    const json = await res.json();
-                    dadosLojasGlobais = json.data || [];
+                dadosLojasGlobais = json.data || [];
 
-                    if (dadosLojasGlobais.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Nenhuma venda registrada nas lojas para o período selecionado.</td></tr>`;
-                        return;
-                    }
-
-                    tbody.innerHTML = dadosLojasGlobais.map(item => `
-                        <tr class="hover:bg-slate-50 transition">
-                            <td class="py-1.5 px-4 font-semibold text-slate-900">${item.loja}</td>
-                            <td class="py-1.5 px-4 text-slate-600">${Number(item.vendas || 0).toLocaleString('pt-BR')}</td>
-                            <td class="py-1.5 px-4 font-semibold text-blue-600">R$ ${Number(item.fat || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                            <td class="py-1.5 px-4 font-semibold text-blue-600">R$ ${Number(item.ticket || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                            <td class="py-1.5 px-4 font-semibold text-emerald-600">${Number(item.part || 0).toFixed(1)}%</td>
-                        </tr>
-                    `).join('');
+                if (dadosLojasGlobais.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 text-xs">Nenhuma venda registrada nas lojas para o período selecionado.</td></tr>`;
+                    return;
                 }
+
+                tbody.innerHTML = dadosLojasGlobais.map(item => `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-1.5 px-4 font-semibold text-slate-900">${item?.loja || '-'}</td>
+                        <td class="py-1.5 px-4 text-slate-600">${Number(item?.vendas || 0).toLocaleString('pt-BR')}</td>
+                        <td class="py-1.5 px-4 font-semibold text-blue-600">R$ ${Number(item?.fat || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td class="py-1.5 px-4 font-semibold text-blue-600">R$ ${Number(item?.ticket || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td class="py-1.5 px-4 font-semibold text-emerald-600">${Number(item?.part || 0).toFixed(1)}%</td>
+                    </tr>
+                `).join('');
             } catch (error) {
-                console.error('Erro ao carregar desempenho por loja:', error);
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 text-xs">Erro ao consultar desempenho por loja.</td></tr>`;
+                if (error.name !== 'AbortError') {
+                    console.error('Erro ao carregar desempenho por loja:', error);
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500 text-xs">Erro ao consultar desempenho por loja.</td></tr>`;
+                }
             }
         }
 
         function exportarExcelLojas() {
             if (!dadosLojasGlobais.length) return alert('Não há dados de lojas para exportar.');
             const formatados = dadosLojasGlobais.map(l => ({
-                'Loja / Cliente': l.loja,
-                'Vendas': l.vendas,
-                'Faturamento (R$)': l.fat,
-                'Ticket Médio (R$)': l.ticket,
-                'Part. (%)': Number(l.part || 0).toFixed(1) + '%'
+                'Loja / Cliente': l?.loja || '',
+                'Vendas': Number(l?.vendas || 0),
+                'Faturamento (R$)': Number(l?.fat || 0),
+                'Ticket Médio (R$)': Number(l?.ticket || 0),
+                'Part. (%)': Number(l?.part || 0).toFixed(1) + '%'
             }));
             const ws = XLSX.utils.json_to_sheet(formatados);
             const wb = XLSX.utils.book_new();
@@ -984,86 +1108,86 @@
         }
 
         // ==========================================================
-        // GRÁFICOS DO DASHBOARD
+        // SEÇÃO 2: GRÁFICOS ANALÍTICOS (EM LOTES)
         // ==========================================================
-        async function carregarGraficosDashboard() {
-            const dtIni  = document.getElementById('filtroDataIni').value.replaceAll('-', '');
-            const dtFim  = document.getElementById('filtroDataFim').value.replaceAll('-', '');
-            const filial = document.getElementById('filtroFilial').value;
+        async function carregarGraficosDashboard(forcar = false) {
+            if (ctrlGraficos) ctrlGraficos.abort();
+            ctrlGraficos = new AbortController();
+            const signal = ctrlGraficos.signal;
+
+            const assinatura = getAssinaturaFiltroAtual();
+            const dtIni      = document.getElementById('filtroDataIni').value.replaceAll('-', '');
+            const dtFim      = document.getElementById('filtroDataFim').value.replaceAll('-', '');
+            const filial     = document.getElementById('filtroFilial').value;
+            const qForce     = forcar ? '&force=1' : '';
 
             try {
-                const [resMerc, resTop10, resTop10Q, resDepto, res30D, res30DF01, res30DF02] = await Promise.all([
-                    fetch(`${API_BASE}/relatorios?tipo=fat_mercadologico&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
-                    fetch(`${API_BASE}/relatorios?tipo=top10_produtos&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
-                    fetch(`${API_BASE}/relatorios?tipo=top10_qtd&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
-                    fetch(`${API_BASE}/relatorios?tipo=fat_setor&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
-                    fetch(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=${filial}`, { headers: getHeadersAuth() }),
-                    fetch(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=01`, { headers: getHeadersAuth() }),
-                    fetch(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=02`, { headers: getHeadersAuth() })
+                // Lote 1: rankings e departamento
+                const [rMerc, rTop10, rTop10Q, rDepto] = await Promise.allSettled([
+                    fetchProtheusJson(`${API_BASE}/relatorios?tipo=fat_mercadologico&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}${qForce}`, signal),
+                    fetchProtheusJson(`${API_BASE}/relatorios?tipo=top10_produtos&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}${qForce}`, signal),
+                    fetchProtheusJson(`${API_BASE}/relatorios?tipo=top10_qtd&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}${qForce}`, signal),
+                    fetchProtheusJson(`${API_BASE}/relatorios?tipo=fat_setor&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}${qForce}`, signal)
                 ]);
 
-                if (resMerc.ok) {
-                    const jsonMerc = await resMerc.json();
-                    renderizarGraficosTop10Mercadologicos(jsonMerc.data || []);
-                }
-                if (resTop10.ok) {
-                    const jsonTop10 = await resTop10.json();
-                    renderizarGraficoTop10(jsonTop10.data || []);
-                }
-                if (resTop10Q.ok) {
-                    const jsonTop10Q = await resTop10Q.json();
-                    renderizarGraficoTop10Qtd(jsonTop10Q.data || []);
-                }
-                if (resDepto.ok) {
-                    const jsonDepto = await resDepto.json();
-                    renderizarGraficoDepartamento(jsonDepto.data || []);
-                }
-                if (res30D.ok) {
-                    const json30D = await res30D.json();
-                    chartFat30Instance = renderizarGraficoBarras30Dias(
-                        'graficoFat30Dias',
-                        chartFat30Instance,
-                        json30D.data || [],
-                        'rgba(245, 158, 11, 0.85)',
-                        'rgb(245, 158, 11)'
-                    );
-                }
-                if (res30DF01.ok) {
-                    const json30DF01 = await res30DF01.json();
-                    chartFat30F01Instance = renderizarGraficoBarras30Dias(
-                        'graficoFat30DiasF01',
-                        chartFat30F01Instance,
-                        json30DF01.data || [],
-                        'rgba(99, 102, 241, 0.85)',
-                        'rgb(99, 102, 241)'
-                    );
-                }
-                if (res30DF02.ok) {
-                    const json30DF02 = await res30DF02.json();
-                    chartFat30F02Instance = renderizarGraficoBarras30Dias(
-                        'graficoFat30DiasF02',
-                        chartFat30F02Instance,
-                        json30DF02.data || [],
-                        'rgba(16, 185, 129, 0.85)',
-                        'rgb(16, 185, 129)'
-                    );
-                }
+                if (signal.aborted) return;
+
+                renderizarGraficosTop10Mercadologicos(rMerc.status === 'fulfilled' ? rMerc.value.data : []);
+                renderizarGraficoTop10(rTop10.status === 'fulfilled' ? rTop10.value.data : []);
+                renderizarGraficoTop10Qtd(rTop10Q.status === 'fulfilled' ? rTop10Q.value.data : []);
+                renderizarGraficoDepartamento(rDepto.status === 'fulfilled' ? rDepto.value.data : []);
+
+                // Lote 2: séries de 30 dias
+                const [r30D, r30DF01, r30DF02] = await Promise.allSettled([
+                    fetchProtheusJson(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=${filial}${qForce}`, signal),
+                    fetchProtheusJson(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=01${qForce}`, signal),
+                    fetchProtheusJson(`${API_BASE}/relatorios?tipo=fat_30_dias&dataFim=${dtFim}&filial=02${qForce}`, signal)
+                ]);
+
+                if (signal.aborted) return;
+
+                chartFat30Instance = renderizarGraficoBarras30Dias(
+                    'graficoFat30Dias',
+                    chartFat30Instance,
+                    r30D.status === 'fulfilled' ? r30D.value.data : [],
+                    'rgba(245, 158, 11, 0.85)',
+                    'rgb(245, 158, 11)'
+                );
+                chartFat30F01Instance = renderizarGraficoBarras30Dias(
+                    'graficoFat30DiasF01',
+                    chartFat30F01Instance,
+                    r30DF01.status === 'fulfilled' ? r30DF01.value.data : [],
+                    'rgba(99, 102, 241, 0.85)',
+                    'rgb(99, 102, 241)'
+                );
+                chartFat30F02Instance = renderizarGraficoBarras30Dias(
+                    'graficoFat30DiasF02',
+                    chartFat30F02Instance,
+                    r30DF02.status === 'fulfilled' ? r30DF02.value.data : [],
+                    'rgba(16, 185, 129, 0.85)',
+                    'rgb(16, 185, 129)'
+                );
+
+                assinaturaGraficosCarregada = assinatura;
             } catch (error) {
-                console.error('Erro ao carregar gráficos:', error);
+                if (error.name !== 'AbortError') {
+                    console.error('Erro ao carregar gráficos:', error);
+                }
             }
         }
 
-        function renderizarGraficosTop10Mercadologicos(dados) {
+        function renderizarGraficosTop10Mercadologicos(dados = []) {
+            const lista = Array.isArray(dados) ? dados : [];
             const ctxFat = document.getElementById('graficoTop10MercFat').getContext('2d');
             if (chartTop10MercFatInst) chartTop10MercFatInst.destroy();
 
-            const top10Fat = [...dados].sort((a, b) => Number(b.faturamento || 0) - Number(a.faturamento || 0)).slice(0, 10);
+            const top10Fat = [...lista].sort((a, b) => Number(b?.faturamento || 0) - Number(a?.faturamento || 0)).slice(0, 10);
             const labelsFat = top10Fat.map(d => {
-                const desc = d.descricao || 'SEM DESCRIÇÃO';
+                const desc = String(d?.descricao || 'SEM DESCRIÇÃO');
                 const descCurta = desc.length > 22 ? desc.substring(0, 22) + '...' : desc;
-                return `${d.codigo ? d.codigo + ' - ' : ''}${descCurta}`;
+                return `${d?.codigo ? d.codigo + ' - ' : ''}${descCurta}`;
             });
-            const valoresFat = top10Fat.map(d => Number(d.faturamento || 0));
+            const valoresFat = top10Fat.map(d => Number(d?.faturamento || 0));
 
             chartTop10MercFatInst = new Chart(ctxFat, {
                 type: 'bar',
@@ -1087,10 +1211,10 @@
                         tooltip: {
                             callbacks: {
                                 title: (items) => {
-                                    const item = top10Fat[items[0].dataIndex];
+                                    const item = top10Fat[items[0].dataIndex] || {};
                                     return `${item.codigo ? item.codigo + ' - ' : ''}${item.descricao || 'SEM DESCRIÇÃO'}`;
                                 },
-                                label: (c) => ` Faturamento: R$ ${Number(c.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                label: (c) => ` Faturamento: R$ ${Number(c.raw || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                             }
                         }
                     },
@@ -1104,13 +1228,13 @@
             const ctxQtd = document.getElementById('graficoTop10MercQtd').getContext('2d');
             if (chartTop10MercQtdInst) chartTop10MercQtdInst.destroy();
 
-            const top10Qtd = [...dados].sort((a, b) => Number(b.qtd || 0) - Number(a.qtd || 0)).slice(0, 10);
+            const top10Qtd = [...lista].sort((a, b) => Number(b?.qtd || 0) - Number(a?.qtd || 0)).slice(0, 10);
             const labelsQtd = top10Qtd.map(d => {
-                const desc = d.descricao || 'SEM DESCRIÇÃO';
+                const desc = String(d?.descricao || 'SEM DESCRIÇÃO');
                 const descCurta = desc.length > 22 ? desc.substring(0, 22) + '...' : desc;
-                return `${d.codigo ? d.codigo + ' - ' : ''}${descCurta}`;
+                return `${d?.codigo ? d.codigo + ' - ' : ''}${descCurta}`;
             });
-            const valoresQtd = top10Qtd.map(d => Number(d.qtd || 0));
+            const valoresQtd = top10Qtd.map(d => Number(d?.qtd || 0));
 
             chartTop10MercQtdInst = new Chart(ctxQtd, {
                 type: 'bar',
@@ -1134,10 +1258,10 @@
                         tooltip: {
                             callbacks: {
                                 title: (items) => {
-                                    const item = top10Qtd[items[0].dataIndex];
+                                    const item = top10Qtd[items[0].dataIndex] || {};
                                     return `${item.codigo ? item.codigo + ' - ' : ''}${item.descricao || 'SEM DESCRIÇÃO'}`;
                                 },
-                                label: (c) => ` Quantidade: ${Number(c.raw).toLocaleString('pt-BR')} un`
+                                label: (c) => ` Quantidade: ${Number(c.raw || 0).toLocaleString('pt-BR')} un`
                             }
                         }
                     },
@@ -1149,11 +1273,15 @@
             });
         }
 
-        function renderizarGraficoTop10(dados) {
+        function renderizarGraficoTop10(dados = []) {
+            const lista = Array.isArray(dados) ? dados : [];
             const ctx = document.getElementById('graficoTop10Produtos').getContext('2d');
             if (chartTop10Instance) chartTop10Instance.destroy();
-            const labels  = dados.map(d => d.desc.length > 20 ? d.desc.substring(0, 20) + '...' : d.desc);
-            const valores = dados.map(d => Number(d.total || 0));
+            const labels  = lista.map(d => {
+                const desc = String(d?.desc || '');
+                return desc.length > 20 ? desc.substring(0, 20) + '...' : desc;
+            });
+            const valores = lista.map(d => Number(d?.total || 0));
 
             chartTop10Instance = new Chart(ctx, {
                 type: 'bar',
@@ -1176,8 +1304,8 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                title: (items) => dados[items[0].dataIndex].desc,
-                                label: (c) => ` R$ ${Number(c.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                title: (items) => lista[items[0].dataIndex]?.desc || '',
+                                label: (c) => ` R$ ${Number(c.raw || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                             }
                         }
                     },
@@ -1189,11 +1317,15 @@
             });
         }
 
-        function renderizarGraficoTop10Qtd(dados) {
+        function renderizarGraficoTop10Qtd(dados = []) {
+            const lista = Array.isArray(dados) ? dados : [];
             const ctx = document.getElementById('graficoTop10Qtd').getContext('2d');
             if (chartTop10QtdInst) chartTop10QtdInst.destroy();
-            const labels  = dados.map(d => d.desc.length > 20 ? d.desc.substring(0, 20) + '...' : d.desc);
-            const valores = dados.map(d => Number(d.qtd || 0));
+            const labels  = lista.map(d => {
+                const desc = String(d?.desc || '');
+                return desc.length > 20 ? desc.substring(0, 20) + '...' : desc;
+            });
+            const valores = lista.map(d => Number(d?.qtd || 0));
 
             chartTop10QtdInst = new Chart(ctx, {
                 type: 'bar',
@@ -1216,8 +1348,8 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                title: (items) => dados[items[0].dataIndex].desc,
-                                label: (c) => ` ${Number(c.raw).toLocaleString('pt-BR')} un`
+                                title: (items) => lista[items[0].dataIndex]?.desc || '',
+                                label: (c) => ` ${Number(c.raw || 0).toLocaleString('pt-BR')} un`
                             }
                         }
                     },
@@ -1229,16 +1361,17 @@
             });
         }
 
-        function renderizarGraficoDepartamento(dados) {
+        function renderizarGraficoDepartamento(dados = []) {
+            const lista = Array.isArray(dados) ? dados : [];
             const ctx = document.getElementById('graficoDepartamento').getContext('2d');
             if (chartDeptoInstance) chartDeptoInstance.destroy();
             
-            const topDepto = [...dados]
-                .sort((a, b) => Number(b.faturamento ?? b.total ?? 0) - Number(a.faturamento ?? a.total ?? 0))
+            const topDepto = [...lista]
+                .sort((a, b) => Number(b?.faturamento ?? b?.total ?? 0) - Number(a?.faturamento ?? a?.total ?? 0))
                 .slice(0, 10);
 
-            const labels = topDepto.map(d => d.setor || d.descricao || 'SEM DEPARTAMENTO');
-            const valores = topDepto.map(d => Number(d.faturamento ?? d.total ?? 0));
+            const labels = topDepto.map(d => d?.setor || d?.descricao || 'SEM DEPARTAMENTO');
+            const valores = topDepto.map(d => Number(d?.faturamento ?? d?.total ?? 0));
 
             chartDeptoInstance = new Chart(ctx, {
                 type: 'doughnut',
@@ -1256,21 +1389,22 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } },
-                        tooltip: { callbacks: { label: (c) => ` ${c.label}: R$ ${Number(c.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` } }
+                        tooltip: { callbacks: { label: (c) => ` ${c.label}: R$ ${Number(c.raw || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` } }
                     }
                 }
             });
         }
 
-        function renderizarGraficoBarras30Dias(canvasId, instanciaAnterior, dados, bgColor, borderColor) {
+        function renderizarGraficoBarras30Dias(canvasId, instanciaAnterior, dados = [], bgColor, borderColor) {
+            const lista = Array.isArray(dados) ? dados : [];
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (instanciaAnterior) instanciaAnterior.destroy();
             
-            const labels = dados.map(d => {
-                let s = String(d.data);
+            const labels = lista.map(d => {
+                let s = String(d?.data || '');
                 return s.length === 8 ? `${s.substring(6,8)}/${s.substring(4,6)}` : s;
             });
-            const valores = dados.map(d => Number(d.total || 0));
+            const valores = lista.map(d => Number(d?.total || 0));
 
             return new Chart(ctx, {
                 type: 'bar',
@@ -1292,7 +1426,7 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (context) => ` R$ ${Number(context.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                label: (context) => ` R$ ${Number(context.raw || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
                             }
                         }
                     },
@@ -1311,10 +1445,17 @@
         }
 
         // ==========================================================
-        // TABELAS DA ABA DE RELATÓRIOS DETALHADOS
+        // SEÇÃO 3: TABELAS DA ABA DE RELATÓRIOS DETALHADOS
         // ==========================================================
-        async function carregarTabelaAba() {
-            const config = CONFIG_ABAS[abaAtual];
+        async function carregarTabelaAba(forcar = false) {
+            if (ctrlRelatorios) ctrlRelatorios.abort();
+            ctrlRelatorios = new AbortController();
+            const signal = ctrlRelatorios.signal;
+
+            const abaSolicitada = abaAtual;
+            const assinatura    = getAssinaturaFiltroAtual();
+            const config        = CONFIG_ABAS[abaSolicitada];
+
             document.getElementById('tituloRelatorio').innerText = config.titulo;
             document.getElementById('theadRelatorio').innerHTML = `<tr>${config.colunas.map(c => `<th class="p-3">${c}</th>`).join('')}</tr>`;
             document.getElementById('tbodyRelatorio').innerHTML = `<tr><td colspan="${config.colunas.length}" class="p-8 text-center text-slate-400">Consultando Protheus...</td></tr>`;
@@ -1322,29 +1463,38 @@
             const dtIni  = document.getElementById('filtroDataIni').value.replaceAll('-', '');
             const dtFim  = document.getElementById('filtroDataFim').value.replaceAll('-', '');
             const filial = document.getElementById('filtroFilial').value;
+            const qForce = forcar ? '&force=1' : '';
 
             try {
-                const resTabela = await fetch(`${API_BASE}/relatorios?tipo=${abaAtual}&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}`, {
-                    method: 'GET',
-                    headers: getHeadersAuth()
-                });
+                const jsonTabela = await fetchProtheusJson(
+                    `${API_BASE}/relatorios?tipo=${abaSolicitada}&dataIni=${dtIni}&dataFim=${dtFim}&filial=${filial}${qForce}`,
+                    signal
+                );
 
-                if (!resTabela.ok) throw new Error(`Erro HTTP ${resTabela.status}`);
-                const jsonTabela = await resTabela.json();
+                if (signal.aborted) return;
 
                 if (jsonTabela.success) {
-                    dadosGlobais = jsonTabela.data || [];
-                    renderizarTabela(dadosGlobais);
-                    // Preserva o filtro digitado caso o auto-refresh atualize os dados
-                    if (document.getElementById('buscaTabela').value.trim() !== '') {
-                        filtrarTabela();
+                    const lista = jsonTabela.data || [];
+                    cacheSubAbasMemoria[abaSolicitada] = {
+                        assinatura: assinatura,
+                        dados: lista
+                    };
+
+                    if (abaAtual === abaSolicitada) {
+                        dadosGlobais = lista;
+                        renderizarTabela(dadosGlobais);
+                        if (document.getElementById('buscaTabela').value.trim() !== '') {
+                            filtrarTabela();
+                        }
                     }
                 } else {
                     document.getElementById('tbodyRelatorio').innerHTML = `<tr><td colspan="${config.colunas.length}" class="p-8 text-center text-red-500">Erro ao processar dados no Protheus.</td></tr>`;
                 }
             } catch (error) {
-                console.error('Falha na integração Protheus:', error);
-                document.getElementById('tbodyRelatorio').innerHTML = `<tr><td colspan="${config.colunas.length}" class="p-8 text-center text-red-500">Falha de conexão ou autenticação com o servidor Protheus.</td></tr>`;
+                if (error.name !== 'AbortError') {
+                    console.error('Falha na integração Protheus:', error);
+                    document.getElementById('tbodyRelatorio').innerHTML = `<tr><td colspan="${config.colunas.length}" class="p-8 text-center text-red-500">Falha de conexão ou autenticação com o servidor Protheus.</td></tr>`;
+                }
             }
         }
 
@@ -1363,7 +1513,7 @@
         function filtrarTabela() {
             const termo = document.getElementById('buscaTabela').value.toLowerCase();
             const filtrados = dadosGlobais.filter(obj => 
-                Object.values(obj).some(val => String(val).toLowerCase().includes(termo))
+                obj && Object.values(obj).some(val => String(val ?? '').toLowerCase().includes(termo))
             );
             renderizarTabela(filtrados);
         }
@@ -1392,6 +1542,7 @@
             document.getElementById('emailDestinatario').value = '';
             document.getElementById('modalEmail').classList.remove('hidden');
             document.getElementById('modalEmail').classList.add('flex');
+            document.getElementById('emailDestinatario').focus();
         }
 
         function fecharModalEmail() {
@@ -1426,11 +1577,11 @@
                     const bg = idx % 2 === 0 ? '#ffffff' : '#f1f5f9';
                     return `
                         <tr style="background-color: ${bg};">
-                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">${item.loja}</td>
-                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; color: #334155;">${Number(item.vendas || 0).toLocaleString('pt-BR')}</td>
-                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #2563eb;">${fmtMoeda(item.fat)}</td>
-                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #2563eb;">${fmtMoeda(item.ticket)}</td>
-                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #059669;">${fmtPct(item.part)}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #0f172a;">${item?.loja || '-'}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; color: #334155;">${Number(item?.vendas || 0).toLocaleString('pt-BR')}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #2563eb;">${fmtMoeda(item?.fat)}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #2563eb;">${fmtMoeda(item?.ticket)}</td>
+                            <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #059669;">${fmtPct(item?.part)}</td>
                         </tr>
                     `;
                 }).join('');
@@ -1440,7 +1591,6 @@
 
             return `
                 <div style="font-family: Arial, Helvetica, sans-serif; color: #1e293b; max-width: 850px; margin: 0 auto;">
-                    <!-- Cabeçalho Principal -->
                     <div style="background-color: #0f172a; color: #ffffff; padding: 16px 20px; border-radius: 6px 6px 0 0;">
                         <h2 style="margin: 0; font-size: 18px; font-weight: bold;">Painel Executivo Comercial — Resumo Consolidado</h2>
                         <p style="margin: 5px 0 0 0; font-size: 12px; color: #cbd5e1;">
@@ -1448,7 +1598,6 @@
                         </p>
                     </div>
 
-                    <!-- 1. Indicadores Principais -->
                     <table style="width: 100%; border-collapse: collapse; margin-top: 12px; border: 1px solid #cbd5e1;">
                         <thead>
                             <tr>
@@ -1480,7 +1629,6 @@
                         </tbody>
                     </table>
 
-                    <!-- 2. Comparativo Mês Anterior -->
                     <table style="width: 100%; border-collapse: collapse; margin-top: 14px; border: 1px solid #cbd5e1;">
                         <thead>
                             <tr>
@@ -1510,7 +1658,6 @@
                         </tbody>
                     </table>
 
-                    <!-- 3. Comparativo Ano Anterior -->
                     <table style="width: 100%; border-collapse: collapse; margin-top: 14px; border: 1px solid #cbd5e1;">
                         <thead>
                             <tr>
@@ -1540,7 +1687,6 @@
                         </tbody>
                     </table>
 
-                    <!-- 4. Desempenho por Loja -->
                     <table style="width: 100%; border-collapse: collapse; margin-top: 14px; border: 1px solid #cbd5e1; font-size: 12px;">
                         <thead>
                             <tr>
@@ -1632,24 +1778,18 @@
                     })
                 });
 
-                if (!res.ok) {
-                    throw new Error(`Erro HTTP ${res.status}: ${res.statusText}`);
-                }
-
                 const json = await res.json();
-                if (json.success) {
+                if (json && json.success) {
                     alert('E-mail enviado com sucesso pelo Protheus!');
                     fecharModalEmail();
                 } else {
-                    alert('O Protheus recusou o envio. Verifique a rotina REST e o parâmetro de e-mail.');
+                    alert('O Protheus não conseguiu enviar o e-mail. Verifique os destinatários ou o parâmetro MV_XMAILPN.');
                 }
             } catch (err) {
                 console.error(err);
-                alert('Erro ao tentar enviar o e-mail: ' + err.message);
+                alert('Erro de comunicação ao tentar enviar o e-mail.');
             }
         }
-
-
     </script>
 </body>
 </html>
